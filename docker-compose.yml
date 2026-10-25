@@ -1,0 +1,147 @@
+services:
+  api:
+    build:
+      context: ./smart-games-api
+      dockerfile: Dockerfile
+      target: development
+    container_name: smart_games_api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      NODE_ENV: development
+      FRONT_URL: ${FRONT_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      PORT: 3000
+      CHOKIDAR_USEPOLLING: 'true'
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - smart_games
+    develop:
+      watch:
+        - action: sync
+          path: ./smart-games-api/src
+          target: /app/src
+        - action: sync
+          path: ./smart-games-api/prisma
+          target: /app/prisma
+        - action: sync
+          path: ./smart_games_api/generated
+          target: /app/generated
+        - action: rebuild
+          path: ./smart-games-api/package.json
+
+  frontend:
+    build:
+      context: ./smart-games-front
+      dockerfile: Dockerfile
+      target: development
+    container_name: smart_games_front
+    restart: unless-stopped
+    ports:
+      - '3001:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      WATCHPACK_POLLING: 'true'
+    networks:
+      - smart_games
+    develop:
+      watch:
+        - action: sync
+          path: ./smart-games-front
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./smart-games-front/package.json
+
+  redis:
+    image: redis:7-alpine
+    container_name: smart_games_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    networks:
+      - smart_games
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: smart_games_redis_insight
+    restart: unless-stopped
+    ports:
+      - '5540:5540'
+    volumes:
+      - redis_insight_data:/data
+    depends_on:
+      - redis
+    networks:
+      - smart_games
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart_games_postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smart_games
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: smart_games_pgadmin
+    restart: unless-stopped
+    ports:
+      - '5050:80'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - smart_games
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  redis_insight_data:
+
+networks:
+  smart_games:
+    driver: bridge
+
+  # ─── Gotowe na przyszłość ───────────────────────────────────────────────────
+  # Aby dodać Redis i RabbitMQ wystarczy odkomentować poniższe bloki
+  # i dodać zależności do serwisów api/frontend:
+  #
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: smart_games_rabbitmq
+  #   restart: unless-stopped
+  #   ports:
+  #     - '5672:5672'   # AMQP
+  #     - '15672:15672' # Management UI
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+  #   networks:
+  #     - smart_games

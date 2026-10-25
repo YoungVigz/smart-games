@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  login     String    @unique
+  email     String    @unique
+  password  String
+  xp        Int       @default(0)
+
+  bio       String?   @db.VarChar(160)
+  avatar    String    @default("emerald")
+
+  sessions  UserSession[]
+  games SudokuGame[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  SURRENDERED
+}
+
+enum GameDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model SudokuGame {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status        GameStatus     @default(IN_PROGRESS)
+  difficulty    GameDifficulty 
+  
+  errors        Int            @default(0)
+  timeElapsed   Int            @default(0) 
+  lastStartedAt DateTime?      @default(now())
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId, status])
+}
