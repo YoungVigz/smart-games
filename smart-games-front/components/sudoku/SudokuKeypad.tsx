@@ -26,12 +26,12 @@ export const SudokuKeypad = ({
                             key={num}
                             onClick={() => onInsert(num)}
                             disabled={remaining === 0}
-                            className="group flex flex-col items-center justify-center h-14 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-emerald-500 transition-all disabled:opacity-30 active:scale-95"
+                            className="group flex flex-col items-center justify-center h-14 bg-surface-2 border border-line rounded-xl hover:border-primary transition-all disabled:opacity-30 active:scale-95"
                         >
-                            <span className="text-xl font-black text-zinc-200 group-hover:text-emerald-500 transition-colors">
+                            <span className="text-xl font-black text-fg/80 group-hover:text-primary transition-colors">
                                 {num}
                             </span>
-                            <span className="text-[10px] font-bold text-zinc-600 group-hover:text-emerald-500/50">
+                            <span className="text-[10px] font-bold text-muted/70 group-hover:text-primary/50">
                                 {remaining}
                             </span>
                         </button>
@@ -44,15 +44,15 @@ export const SudokuKeypad = ({
                     onClick={toggleNotes}
                     className={`flex items-center justify-center gap-3 py-4 rounded-2xl border-2 transition-all font-black uppercase text-[10px] tracking-[0.2em] active:scale-[0.98] ${
                         noteMode 
-                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.1)]" 
-                        : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                        ? "bg-primary/10 text-primary border-primary shadow-lg shadow-primary/10" 
+                        : "bg-surface-2 border-line text-muted hover:border-muted"
                     }`}
                 >
                     <Pencil size={16} /> Tryb Notatek: {noteMode ? "WŁ" : "WYŁ"}
                 </button>
                 <button
                     onClick={onErase}
-                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-zinc-900 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-400/50 transition-all font-black uppercase text-[10px] tracking-[0.2em] active:scale-[0.98]"
+                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-surface-2 border-2 border-line text-muted hover:text-danger hover:border-danger/50 transition-all font-black uppercase text-[10px] tracking-[0.2em] active:scale-[0.98]"
                 >
                     <Eraser size={16} /> Wymaż pole
                 </button>

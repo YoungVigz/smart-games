@@ -7,7 +7,7 @@ import VictoryModal from "./VictoryModal"
 import { apiFetch } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import { formatTime } from "@/utils/time"
-import { Clock, AlertCircle } from "lucide-react"
+import { Clock, AlertCircle, Play, Pause, Flag } from "lucide-react"
 
 interface SudokuBoardProps {
     initialData: any;
@@ -180,7 +180,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
     }, [handleAction])
 
     return (
-        <div className="sudoku-container flex flex-col items-center w-full max-w-[540px]">
+        <div className="sudoku-container flex flex-col items-center w-full">
             {victoryData && (
                 <VictoryModal 
                     {...victoryData} 
@@ -191,30 +191,34 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 
             <div className="flex justify-between items-center w-full px-2 mb-6">
                 <div className="flex flex-col gap-1">
-                    <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-fit">
+                    <span className="bg-surface-3 text-muted px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-fit">
                         {game.difficulty}
                     </span>
-                    <div className="flex items-center gap-1.5 text-zinc-500 font-bold text-sm">
-                        <AlertCircle size={14} className={game.errors > 0 ? "text-red-500" : ""} />
-                        Błędy: <span className={game.errors > 0 ? "text-red-500" : "text-zinc-300"}>{game.errors}</span>
+                    <div className="flex items-center gap-1.5 text-muted font-bold text-sm">
+                        <AlertCircle size={14} className={game.errors > 0 ? "text-danger" : ""} />
+                        Błędy: <span className={game.errors > 0 ? "text-danger" : "text-fg/80"}>{game.errors}</span>
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-emerald-500 font-mono font-black text-xl tracking-wider">
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-primary font-mono font-black text-xl tracking-wider">
                         <Clock size={18} />
                         {formatTime(elapsed)}
                     </div>
                     <button 
                         onClick={() => handleAction('pause')} 
-                        className="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500/20 transition-all"
+                        className="bg-primary/10 text-primary px-4 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-primary/20 transition-all cursor-pointer"
                     >
-                        {game.status === 'PAUSED' ? 'Wznów' : 'Pauza'}
+                        {game.status === 'PAUSED' ? <Play fill="currentColor" size={18} /> : <Pause fill="currentColor" size={18} />}
+                    </button>
+
+                    <button onClick={() => confirm("Czy na pewno chcesz poddać grę?") && handleAction('surrender')} className="bg-danger/10 px-4 py-2 rounded-xl hover:bg-danger/20 cursor-pointer hover:text-danger text-muted transition-colors">
+                        <Flag fill="currentColor" size={18} />
                     </button>
                 </div>
             </div>
 
-            <div className="relative">
+            <div className="relative flex">
                 {game.status === 'PAUSED' && (
                     <div className="board-overlay">
                         <h2 className="text-2xl font-black italic mb-4">GRA ZATRZYMANA</h2>
@@ -228,19 +232,15 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
                         ))
                     )}
                 </div>
-            </div>
-            
-            <SudokuKeypad 
-                getRemainingCount={(n) => 9 - game.board.flat().filter((c: any) => c.value === n && !c.invalid).length} 
-                onInsert={(n) => handleAction(noteMode ? 'note' : 'move', n)}
-                onErase={() => handleAction('erase')}
-                noteMode={noteMode}
-                toggleNotes={() => setNoteMode(!noteMode)}
-            />
 
-            <button onClick={() => confirm("Czy na pewno chcesz poddać grę?") && handleAction('surrender')} className="surrender-link uppercase text-zinc-600 hover:text-red-500 transition-colors mt-8 font-black text-[10px] tracking-[0.2em]">
-                Poddaj grę
-            </button>
+                <SudokuKeypad 
+                    getRemainingCount={(n) => 9 - game.board.flat().filter((c: any) => c.value === n && !c.invalid).length} 
+                    onInsert={(n) => handleAction(noteMode ? 'note' : 'move', n)}
+                    onErase={() => handleAction('erase')}
+                    noteMode={noteMode}
+                    toggleNotes={() => setNoteMode(!noteMode)}
+                />
+            </div>
         </div>
     )
 }

@@ -67,22 +67,22 @@ export default function SudokuPage() {
     }
   };
 
-  if (status === 'loading' || loading) return <div className="h-full flex items-center justify-center text-emerald-500 font-black animate-pulse">WCZYTYWANIE...</div>;
+  if (status === 'loading' || loading) return <div className="h-full flex items-center justify-center text-primary font-black animate-pulse">WCZYTYWANIE...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto h-full flex flex-col items-center justify-center p-6 pb-20">
+    <div className="mx-auto h-full flex flex-col items-center justify-center">
       <AnimatePresence>
         {showVsScreen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-zinc-950 flex items-center justify-center overflow-hidden">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-surface flex items-center justify-center overflow-hidden">
             <div className="flex items-center gap-16 relative z-10">
                 <motion.div initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="text-center space-y-4">
-                    <div className="w-40 h-40 bg-emerald-500 rounded-[40px] flex items-center justify-center text-zinc-950 font-black text-6xl shadow-[0_0_50px_rgba(16,185,129,0.3)]">{user?.login[0].toUpperCase()}</div>
-                    <p className="text-2xl font-black italic uppercase text-white">{user?.login}</p>
+                    <div className="w-40 h-40 bg-primary rounded-[40px] flex items-center justify-center text-surface font-black text-6xl shadow-2xl shadow-primary/30">{user?.login[0].toUpperCase()}</div>
+                    <p className="text-2xl font-black italic uppercase text-fg">{user?.login}</p>
                 </motion.div>
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} className="text-8xl font-black italic text-zinc-800">VS</motion.div>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} className="text-8xl font-black italic text-surface-3">VS</motion.div>
                 <motion.div initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="text-center space-y-4">
-                    <div className="w-40 h-40 bg-zinc-900 border-4 border-zinc-800 rounded-[40px] flex items-center justify-center text-zinc-700 shadow-2xl"><UserIcon size={80} /></div>
-                    <p className="text-2xl font-black italic uppercase text-zinc-600">RYWAL</p>
+                    <div className="w-40 h-40 bg-surface-2 border-4 border-line rounded-[40px] flex items-center justify-center text-muted shadow-2xl"><UserIcon size={80} /></div>
+                    <p className="text-2xl font-black italic uppercase text-muted">RYWAL</p>
                 </motion.div>
             </div>
           </motion.div>
@@ -92,8 +92,8 @@ export default function SudokuPage() {
       {!activeGame ? (
         <div className="w-full space-y-12 animate-in fade-in zoom-in-95 duration-500">
             <div className="text-center space-y-3">
-                <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter uppercase text-white">Sudoku <span className="text-emerald-500">Lobby</span></h1>
-                <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-[0.4em]">Wybierz tryb gry</p>
+                <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter uppercase text-fg">Sudoku <span className="text-primary">Lobby</span></h1>
+                <p className="text-muted font-bold uppercase text-[10px] tracking-[0.4em]">Wybierz tryb gry</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 <div className="lg:col-span-8 space-y-10">
@@ -112,18 +112,18 @@ export default function SudokuPage() {
                     )}
                 </div>
                 <div className="lg:col-span-4">
-                    <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[40px] shadow-2xl space-y-8 h-fit">
+                    <div className="bg-surface-2 border border-line p-8 rounded-[40px] shadow-2xl space-y-8 h-fit">
                         <SummaryRow label="Poziom" value={gameMode === "solo" ? difficulty.toUpperCase() : "MEDIUM (PVP)"} />
                         {pvpStatus === "searching" ? (
                             <div className="space-y-4">
-                                <div className="text-center py-6 bg-emerald-500/5 rounded-3xl border border-emerald-500/20">
-                                    <Loader2 className="mx-auto mb-2 text-emerald-500 animate-spin" />
-                                    <p className="text-emerald-500 font-mono text-2xl">{Math.floor(queueTime/60)}:{(queueTime%60).toString().padStart(2,'0')}</p>
+                                <div className="text-center py-6 bg-primary/5 rounded-3xl border border-primary/20">
+                                    <Loader2 className="mx-auto mb-2 text-primary animate-spin" />
+                                    <p className="text-primary font-mono text-2xl">{Math.floor(queueTime/60)}:{(queueTime%60).toString().padStart(2,'0')}</p>
                                 </div>
-                                <button onClick={() => { socketRef.current?.emit("leave_queue"); setPvpStatus("idle"); }} className="w-full bg-zinc-800 py-4 rounded-2xl font-black uppercase text-xs">Anuluj</button>
+                                <button onClick={() => { socketRef.current?.emit("leave_queue"); setPvpStatus("idle"); }} className="w-full bg-surface-3 hover:bg-line py-4 rounded-2xl font-black uppercase text-xs transition-all">Anuluj</button>
                             </div>
                         ) : (
-                            <button onClick={handleStartAction} className="w-full bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-black py-6 rounded-3xl transition-all shadow-xl shadow-emerald-900/20 uppercase italic tracking-tighter">
+                            <button onClick={handleStartAction} className="w-full bg-primary hover:bg-secondary text-surface font-black py-6 rounded-3xl transition-all shadow-xl shadow-primary/20 uppercase italic tracking-tighter">
                                 {gameMode === 'solo' ? 'Start Solo' : 'Join Queue'}
                             </button>
                         )}
@@ -139,13 +139,13 @@ export default function SudokuPage() {
 }
 
 function ModeCard({ active, onClick, icon, title, desc }: any) {
-    return <button onClick={onClick} className={`p-8 rounded-[32px] border-2 text-left transition-all ${active ? "bg-emerald-600/5 border-emerald-500" : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"}`}><div className={`mb-4 p-3 rounded-2xl w-fit ${active ? "bg-emerald-500 text-zinc-950" : "bg-zinc-800 text-zinc-500"}`}>{icon}</div><p className="font-black text-xl uppercase italic text-white">{title}</p><p className="text-[10px] text-zinc-500 font-bold uppercase mt-1">{desc}</p></button>;
+    return <button onClick={onClick} className={`p-8 rounded-[32px] border-2 text-left transition-all ${active ? "bg-primary/5 border-primary" : "bg-surface-2 border-line hover:border-muted"}`}><div className={`mb-4 p-3 rounded-2xl w-fit ${active ? "bg-primary text-surface" : "bg-surface-3 text-muted"}`}>{icon}</div><p className="font-black text-xl uppercase italic text-fg">{title}</p><p className="text-[10px] text-muted font-bold uppercase mt-1">{desc}</p></button>;
 }
 
 function DifficultyBtn({ label, icon: Icon, active, onClick, id }: any) {
-    return <button onClick={() => onClick(id)} className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all font-black uppercase text-[10px] ${active ? "border-emerald-500 text-emerald-500 bg-zinc-800" : "bg-zinc-900 border-zinc-800 text-zinc-500"}`}><Icon size={14} />{label}</button>;
+    return <button onClick={() => onClick(id)} className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all font-black uppercase text-[10px] ${active ? "border-primary text-primary bg-surface-3" : "bg-surface-2 border-line text-muted"}`}><Icon size={14} />{label}</button>;
 }
 
 function SummaryRow({ label, value }: any) {
-    return <div className="flex justify-between items-center border-b border-zinc-800 pb-4"><span className="text-zinc-500 text-[10px] font-black uppercase">{label}</span><span className="text-white font-black uppercase italic">{value}</span></div>;
+    return <div className="flex justify-between items-center border-b border-line pb-4"><span className="text-muted text-[10px] font-black uppercase">{label}</span><span className="text-fg font-black uppercase italic">{value}</span></div>;
 }

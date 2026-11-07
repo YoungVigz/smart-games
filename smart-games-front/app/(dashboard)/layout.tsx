@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { LayoutDashboard, Grid3X3, BarChart3, User, LogOut, ChevronLeft, ChevronRight, ChartLine } from "lucide-react";
+import ThemeSwitcher from "@/components/ThemeButton";
+import { ConsolePanel } from "@/components/console/ConsolePanel";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -27,14 +29,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (status === "loading") {
     return (
-      <div className="h-screen w-screen bg-zinc-950 flex flex-col items-center justify-center gap-4">
+      <div className="h-screen w-screen bg-surface flex flex-col items-center justify-center gap-4">
         <div className="relative">
-          <div className="bg-emerald-500 w-12 h-12 rounded-xl animate-bounce shadow-lg shadow-emerald-500/20 flex items-center justify-center">
-            <span className="text-xl font-black text-zinc-950">S</span>
+          <div className="bg-primary w-12 h-12 rounded-xl animate-bounce shadow-lg shadow-primary/20 flex items-center justify-center">
+            <span className="text-xl font-black text-surface">S</span>
           </div>
-          <div className="absolute -inset-4 bg-emerald-500/20 blur-xl rounded-full animate-pulse" />
+          <div className="absolute -inset-4 bg-primary/20 blur-xl rounded-full animate-pulse" />
         </div>
-        <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">
+        <p className="text-muted text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">
           Smart Games
         </p>
       </div>
@@ -44,18 +46,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen max-h-screen bg-zinc-950 text-zinc-200">
-      <aside className={`relative flex flex-col bg-zinc-900 border-r border-zinc-800 transition-all duration-300 ${isCollapsed ? "w-20" : "w-64"}`}>
+    <div className="flex min-h-screen max-h-screen bg-surface text-fg">
+      <ConsolePanel />
+      <aside className={`relative flex flex-col bg-surface-2 border-r border-line transition-all duration-300 ${isCollapsed ? "w-20" : "w-64"}`}>
         
-        <div className="p-3 border-b border-zinc-800 flex justify-center items-center gap-3">
-          <div className="bg-emerald-500 min-w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <span className="text-xl font-black text-zinc-950 uppercase">S</span>
+        <div className="p-3 border-b border-line flex justify-center items-center gap-3">
+          <div className="bg-primary min-w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <span className="text-xl font-black text-surface uppercase">S</span>
           </div>
-          {!isCollapsed && <span className="text-xl font-black italic tracking-tighter">SMART<span className="text-emerald-500">GAMES</span></span>}
+          {!isCollapsed && <span className="text-xl font-black italic tracking-tighter">SMART<span className="text-primary">GAMES</span></span>}
         </div>
 
         <nav className="flex-1 p-3 space-y-1 relative">
-          <button onClick={() => setIsCollapsed(!isCollapsed)} className="absolute -right-3.5 -top-3.5 bg-zinc-800 border border-zinc-700 rounded-full p-1 text-zinc-400 hover:text-white cursor-pointer z-20">
+          <button onClick={() => setIsCollapsed(!isCollapsed)} className="absolute -right-3.5 -top-3.5 bg-surface-3 border border-line rounded-full p-1 text-muted hover:text-fg cursor-pointer z-20">
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
 
@@ -64,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={item.href}
               href={item.href}
               className={`flex items-center ${isCollapsed ? "justify-center": ""}  gap-3 p-3 rounded-lg font-medium transition-all ${
-                pathname === item.href ? "bg-emerald-600/10 text-emerald-500" : "text-zinc-500 hover:text-white hover:bg-zinc-800"
+                pathname === item.href ? "bg-primary/10 text-primary" : "text-muted hover:text-fg hover:bg-surface-3"
               }`}
             >
               <item.icon size={24} />
@@ -73,8 +76,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
 
-        <div className="p-3 border-t border-zinc-800 space-y-1">
-          <button onClick={logout} className="w-full flex justify-center items-center gap-3 p-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all cursor-pointer">
+        <div className="p-3 border-t border-line space-y-1">
+          <button onClick={logout} className="w-full flex justify-center items-center gap-3 p-3 rounded-lg text-danger hover:bg-danger/10 transition-all cursor-pointer">
             <LogOut size={24} />
             {!isCollapsed && <span className="font-bold text-sm">Wyloguj się</span>}
           </button>
@@ -82,9 +85,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto px-12 py-8 relative">
           {children}
-      </main>
+        </main>
+
+        <footer className="shrink-0 border-t border-line bg-surface-2 px-8 py-3 flex items-center justify-between text-xs text-muted">
+          <span>
+            © {new Date().getFullYear()} <span className="font-bold text-fg">SMART<span className="text-primary">GAMES</span></span>
+          </span>
+          <div className="flex items-center gap-4">
+            <ThemeSwitcher></ThemeSwitcher>
+            <Link href="/privacy" className="hover:text-fg transition-colors">Prywatność</Link>
+            <Link href="/contact" className="hover:text-fg transition-colors">Kontakt</Link>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

@@ -48,15 +48,15 @@ export default function RegisterPage() {
 
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-white p-6">
-            <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-2xl">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-surface text-fg p-6">
+            <div className="w-full max-w-md bg-surface-2 border border-line p-8 rounded-3xl shadow-2xl">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-black italic tracking-tighter">DOŁĄCZ DO <span className="text-emerald-500">SMART</span></h1>
-                    <p className="text-zinc-500 text-sm mt-2">Rywalizuj i poprawiaj swoje wyniki</p>
+                    <h1 className="text-3xl font-black italic tracking-tighter">DOŁĄCZ DO <span className="text-primary">SMART</span></h1>
+                    <p className="text-muted text-sm mt-2">Rywalizuj i poprawiaj swoje wyniki</p>
                 </div>
 
                 {errors.length > 0 && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl mb-6 text-xs">
+                    <div className="bg-danger/10 border border-danger/50 text-danger p-4 rounded-xl mb-6 text-xs">
                         <ul className="list-disc list-inside">
                             {errors.map((err, i) => <li key={i}>{String(err)}</li>)}
                         </ul>
@@ -65,28 +65,28 @@ export default function RegisterPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-zinc-500 ml-1 uppercase">Login</label>
-                        <input type="text" required className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-2xl focus:border-emerald-500 outline-none transition-all"
+                        <label className="text-xs font-bold text-muted ml-1 uppercase">Login</label>
+                        <input type="text" required className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
                             onChange={e => setForm({...form, login: e.target.value})} />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-zinc-500 ml-1 uppercase">Email</label>
-                        <input type="email" required className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-2xl focus:border-emerald-500 outline-none transition-all"
+                        <label className="text-xs font-bold text-muted ml-1 uppercase">Email</label>
+                        <input type="email" required className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
                             onChange={e => setForm({...form, email: e.target.value})} />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-zinc-500 ml-1 uppercase">Hasło</label>
-                        <input type="password" required className="w-full bg-zinc-800 border border-zinc-700 p-4 rounded-2xl focus:border-emerald-500 outline-none transition-all"
+                        <label className="text-xs font-bold text-muted ml-1 uppercase">Hasło</label>
+                        <input type="password" required className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
                             onChange={e => setForm({...form, password: e.target.value})} />
                     </div>
                     
-                    <button disabled={loading} type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-900/20 mt-4">
+                    <button disabled={loading} type="submit" className="w-full bg-primary hover:bg-secondary text-white disabled:opacity-50 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/20 mt-4">
                         {loading ? "Tworzenie konta..." : "Zarejestruj się"}
                     </button>
                 </form>
 
-                <p className="text-center mt-8 text-sm text-zinc-500">
-                    Masz już konto? <Link href="/login" className="text-emerald-400 font-bold hover:text-emerald-300 transition">Zaloguj się</Link>
+                <p className="text-center mt-8 text-sm text-muted">
+                    Masz już konto? <Link href="/login" className="text-primary font-bold hover:opacity-80 transition">Zaloguj się</Link>
                 </p>
             </div>
         </div>

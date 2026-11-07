@@ -7,6 +7,11 @@ import { useAuth } from "@/context/AuthContext"
 import { Swords, AlertCircle, Trophy, XCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
+const BAR_COLORS: Record<string, string> = {
+    primary: "bg-primary",
+    warning: "bg-warning",
+};
+
 export default function PvPSudokuBoard({ initialData, socket, onGameOver }: any) {
     const { user } = useAuth();
     const [game, setGame] = useState(initialData);
@@ -76,8 +81,8 @@ export default function PvPSudokuBoard({ initialData, socket, onGameOver }: any)
     return (
         <div className="flex flex-col items-center w-full max-w-[540px] gap-6">
             <div className="grid grid-cols-2 gap-4 w-full px-2">
-                <StatusBox label="Ty" errors={game.errors} progress={myProgress} color="emerald" />
-                <StatusBox label="Rywal" errors={opponentProgress.errors} progress={opponentProgress.progress} color="amber" />
+                <StatusBox label="Ty" errors={game.errors} progress={myProgress} color="primary" />
+                <StatusBox label="Rywal" errors={opponentProgress.errors} progress={opponentProgress.progress} color="warning" />
             </div>
             <div className="scale-[0.8] sm:scale-100 origin-top">
                 <div className="board !my-0">
@@ -94,13 +99,13 @@ export default function PvPSudokuBoard({ initialData, socket, onGameOver }: any)
 
 function StatusBox({ label, errors, progress, color }: any) {
     return (
-        <div className={`p-4 rounded-2xl border-2 bg-zinc-900 border-zinc-800`}>
+        <div className="p-4 rounded-2xl border-2 bg-surface-2 border-line">
             <div className="flex justify-between items-center mb-2 text-[10px] font-black uppercase">
-                <span className="text-zinc-400">{label}</span>
-                <span className="text-red-500">{errors}/3 ERR</span>
+                <span className="text-muted">{label}</span>
+                <span className="text-danger">{errors}/3 ERR</span>
             </div>
-            <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                <motion.div className={`h-full bg-${color}-500`} animate={{ width: `${progress}%` }} />
+            <div className="h-1.5 w-full bg-surface-3 rounded-full overflow-hidden">
+                <motion.div className={`h-full ${BAR_COLORS[color]}`} animate={{ width: `${progress}%` }} />
             </div>
         </div>
     )
@@ -109,14 +114,14 @@ function StatusBox({ label, errors, progress, color }: any) {
 function ResultModal({ result, userId, onGameOver }: any) {
     const win = result.winnerId === userId;
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[700] bg-zinc-950/95 backdrop-blur-md flex items-center justify-center p-6">
-            <div className="bg-zinc-900 border border-zinc-800 p-10 rounded-[40px] text-center max-w-sm w-full space-y-6">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${win ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[700] bg-surface/95 backdrop-blur-md flex items-center justify-center p-6">
+            <div className="bg-surface-2 border border-line p-10 rounded-[40px] text-center max-w-sm w-full space-y-6">
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${win ? 'bg-primary/10 text-primary' : 'bg-danger/10 text-danger'}`}>
                     {win ? <Trophy size={40} /> : <XCircle size={40} />}
                 </div>
-                <h2 className="text-3xl font-black uppercase italic text-white">{win ? "Zwycięstwo!" : "Porażka"}</h2>
-                <p className="text-zinc-500 text-sm">{result.reason === 'DISQUALIFIED' ? 'Limit błędów przekroczony.' : 'Rywal był szybszy!'}</p>
-                <button onClick={onGameOver} className="w-full bg-emerald-600 py-4 rounded-2xl font-black uppercase text-xs">Powrót</button>
+                <h2 className="text-3xl font-black uppercase italic text-fg">{win ? "Zwycięstwo!" : "Porażka"}</h2>
+                <p className="text-muted text-sm">{result.reason === 'DISQUALIFIED' ? 'Limit błędów przekroczony.' : 'Rywal był szybszy!'}</p>
+                <button onClick={onGameOver} className="w-full bg-primary hover:bg-secondary text-surface py-4 rounded-2xl font-black uppercase text-xs transition-all">Powrót</button>
             </div>
         </motion.div>
     )
