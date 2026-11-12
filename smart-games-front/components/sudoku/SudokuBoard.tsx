@@ -1,5 +1,6 @@
 "use client"
 import "./board.css"
+import "./game-layout.css"
 import { useEffect, useRef, useState, useCallback } from "react"
 import { SudokuCell } from "./SudokuCell"
 import { SudokuKeypad } from "./SudokuKeypad"
@@ -180,7 +181,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
     }, [handleAction])
 
     return (
-        <div className="sudoku-container flex flex-col items-center w-full">
+        <div className="sudoku-container sudoku-game sudoku-solo flex flex-col items-center w-full">
             {victoryData && (
                 <VictoryModal 
                     {...victoryData} 
@@ -189,7 +190,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
                 />
             )}
 
-            <div className="flex justify-between items-center w-full px-2 mb-6">
+            <div className="solo-hud flex justify-between items-center w-full px-2 mb-6">
                 <div className="flex flex-col gap-1">
                     <span className="bg-surface-3 text-muted px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest w-fit">
                         {game.difficulty}
@@ -200,8 +201,8 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
                     </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 text-primary font-mono font-black text-xl tracking-wider">
+                <div className="solo-hud-actions flex items-center gap-2">
+                    <div className="solo-timer flex items-center gap-2 text-primary font-mono font-black text-xl tracking-wider">
                         <Clock size={18} />
                         {formatTime(elapsed)}
                     </div>
@@ -218,7 +219,8 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
                 </div>
             </div>
 
-            <div className="relative flex">
+            <div className="solo-play-area">
+              <div className="solo-board-area">
                 {game.status === 'PAUSED' && (
                     <div className="board-overlay">
                         <h2 className="text-2xl font-black italic mb-4">GRA ZATRZYMANA</h2>
@@ -232,8 +234,10 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
                         ))
                     )}
                 </div>
+              </div>
 
                 <SudokuKeypad 
+                    layout="numpad"
                     getRemainingCount={(n) => 9 - game.board.flat().filter((c: any) => c.value === n && !c.invalid).length} 
                     onInsert={(n) => handleAction(noteMode ? 'note' : 'move', n)}
                     onErase={() => handleAction('erase')}

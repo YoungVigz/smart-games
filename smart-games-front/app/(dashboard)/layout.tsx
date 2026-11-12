@@ -46,9 +46,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen max-h-screen bg-surface text-fg">
+    <div className="dashboard-shell flex min-h-screen max-h-screen bg-surface text-fg">
       <ConsolePanel />
-      <aside className={`relative flex flex-col bg-surface-2 border-r border-line transition-all duration-300 ${isCollapsed ? "w-20" : "w-64"}`}>
+      <aside className={`dashboard-sidebar relative flex flex-col bg-surface-2 border-r border-line transition-all duration-300 ${isCollapsed ? "w-20" : "w-64"}`}>
         
         <div className="p-3 border-b border-line flex justify-center items-center gap-3">
           <div className="bg-primary min-w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
@@ -90,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
 
-        <footer className="shrink-0 border-t border-line bg-surface-2 px-8 py-3 flex items-center justify-between text-xs text-muted">
+        <footer className="dashboard-footer shrink-0 border-t border-line bg-surface-2 px-8 py-3 flex items-center justify-between text-xs text-muted">
           <span>
             © {new Date().getFullYear()} <span className="font-bold text-fg">SMART<span className="text-primary">GAMES</span></span>
           </span>

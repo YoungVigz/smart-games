@@ -1,5 +1,6 @@
 "use client"
 import "./board.css"
+import "./game-layout.css"
 import { useEffect, useRef, useState, useCallback } from "react"
 import { SudokuCell } from "./SudokuCell"
 import { SudokuKeypad } from "./SudokuKeypad"
@@ -79,19 +80,21 @@ export default function PvPSudokuBoard({ initialData, socket, onGameOver }: any)
     };
 
     return (
-        <div className="flex flex-col items-center w-full max-w-[540px] gap-6">
-            <div className="grid grid-cols-2 gap-4 w-full px-2">
+        <div className="sudoku-game sudoku-pvp flex flex-col items-center w-full">
+            <div className="pvp-hud grid grid-cols-2 gap-4 w-full mb-6">
                 <StatusBox label="Ty" errors={game.errors} progress={myProgress} color="primary" />
                 <StatusBox label="Rywal" errors={opponentProgress.errors} progress={opponentProgress.progress} color="warning" />
             </div>
-            <div className="scale-[0.8] sm:scale-100 origin-top">
-                <div className="board !my-0">
+            <div className="solo-play-area">
+              <div className="solo-board-area">
+                <div className="board">
                     {game.board.map((row: any[], rI: number) => row.map((cell: any, cI: number) => (
                         <SudokuCell key={`${rI}-${cI}`} cell={cell} active={getCellClass(rI, cI)} onClick={() => setActiveCell({ row: rI, col: cI })} />
                     )))}
                 </div>
+              </div>
+              <SudokuKeypad layout="numpad" getRemainingCount={(n:number) => 9 - game.board.flat().filter((c:any) => c.value === n && !c.invalid).length} onInsert={(n:number) => handleAction(noteMode ? 'note' : 'move', n)} onErase={() => handleAction('erase')} noteMode={noteMode} toggleNotes={() => setNoteMode(!noteMode)} />
             </div>
-            <SudokuKeypad getRemainingCount={(n:number) => 9 - game.board.flat().filter((c:any) => c.value === n && !c.invalid).length} onInsert={(n:number) => handleAction(noteMode ? 'note' : 'move', n)} onErase={() => handleAction('erase')} noteMode={noteMode} toggleNotes={() => setNoteMode(!noteMode)} />
             <AnimatePresence>{matchResult && <ResultModal result={matchResult} userId={user?.id} onGameOver={onGameOver} />}</AnimatePresence>
         </div>
     )
@@ -99,8 +102,8 @@ export default function PvPSudokuBoard({ initialData, socket, onGameOver }: any)
 
 function StatusBox({ label, errors, progress, color }: any) {
     return (
-        <div className="p-4 rounded-2xl border-2 bg-surface-2 border-line">
-            <div className="flex justify-between items-center mb-2 text-[10px] font-black uppercase">
+        <div className="pvp-status-box p-4 rounded-2xl border-2 bg-surface-2 border-line">
+            <div className="flex flex-wrap gap-1 justify-between items-center mb-2 text-[10px] font-black uppercase">
                 <span className="text-muted">{label}</span>
                 <span className="text-danger">{errors}/3 ERR</span>
             </div>

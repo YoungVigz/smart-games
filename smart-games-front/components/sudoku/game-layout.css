@@ -1,0 +1,185 @@
+/* Shared responsive layout; game interactions and colors stay in board.css. */
+.sudoku-game {
+  width: 100%;
+  max-width: 546px;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.sudoku-pvp {
+  --game-height-reserve: 210px;
+}
+
+.sudoku-pvp .pvp-hud {
+  gap: clamp(8px, 3cqi, 16px);
+  margin-bottom: clamp(12px, 4cqi, 24px);
+}
+
+.sudoku-pvp .pvp-status-box {
+  min-width: 0;
+  padding: clamp(8px, 3cqi, 16px);
+}
+
+.sudoku-game .solo-hud {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-inline: 0;
+  margin-bottom: clamp(12px, 4cqi, 24px);
+}
+
+.sudoku-game .solo-hud-actions {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.sudoku-game .solo-timer {
+  white-space: nowrap;
+  font-size: clamp(14px, 4cqi, 20px);
+}
+
+.sudoku-game .solo-hud-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.sudoku-game .solo-play-area {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  gap: clamp(12px, 4cqi, 24px);
+}
+
+.sudoku-game .solo-board-area {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.sudoku-game .board {
+  width: 100%;
+  aspect-ratio: 1;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  margin: 0;
+}
+
+.sudoku-game .cell {
+  min-width: 0;
+  min-height: 0;
+  font-size: clamp(14px, 4.5cqi, 20px);
+}
+
+.sudoku-game .notes-grid {
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(0px, 0.7cqi, 4px);
+  font-size: clamp(6px, 1.8cqi, 10px);
+  line-height: 1;
+}
+
+.sudoku-game .solo-keypad {
+  width: 192px;
+  max-width: 100%;
+  align-self: center;
+  display: grid;
+  gap: 8px;
+}
+
+.sudoku-game .solo-keypad button {
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.sudoku-game .board-overlay {
+  padding: 12px;
+  text-align: center;
+}
+
+.sudoku-game .board-overlay h2 {
+  font-size: clamp(16px, 5cqi, 24px);
+}
+
+/* Allow the game to use the available space inside the dashboard shell. */
+main:has(.sudoku-game) {
+  container: solo-space / inline-size;
+  padding: clamp(12px, 3vw, 32px) clamp(8px, 3vw, 48px);
+}
+
+/* Include the available height so the side-by-side game fits short desktops. */
+@container solo-space (min-width: 560px) {
+  .sudoku-game {
+    max-width: calc(min(546px, max(200px, 100dvh - var(--game-height-reserve, 180px))) + 216px);
+  }
+
+  .sudoku-game .solo-play-area {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 192px;
+    gap: 24px;
+    align-items: center;
+  }
+}
+
+.dashboard-shell:has(.sudoku-game) .dashboard-sidebar {
+  flex-shrink: 0;
+}
+
+/* The solo victory dialog must remain scrollable on short screens. */
+.sudoku-game > .fixed > div {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: clamp(16px, 5vw, 32px);
+}
+
+@container (max-width: 340px) {
+  .sudoku-game .solo-hud-actions {
+    width: 100%;
+  }
+
+  .sudoku-game .solo-timer {
+    margin-right: auto;
+  }
+
+}
+
+@media (max-width: 639px) {
+  /* Keep the existing navigation reachable without crowding the solo board. */
+  .dashboard-shell:has(.sudoku-game) .dashboard-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .dashboard-shell:has(.sudoku-game) .dashboard-footer > div {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dashboard-shell:has(.sudoku-game) .dashboard-sidebar {
+    width: 64px;
+  }
+
+  .dashboard-shell:has(.sudoku-game) .dashboard-sidebar span:not(.uppercase) {
+    display: none;
+  }
+
+  .dashboard-shell:has(.sudoku-game) .dashboard-sidebar nav,
+  .dashboard-shell:has(.sudoku-game) .dashboard-sidebar > div {
+    padding-inline: 8px;
+  }
+
+  .dashboard-shell:has(.sudoku-game) .dashboard-sidebar nav a {
+    justify-content: center;
+    gap: 0;
+    padding-inline: 8px;
+  }
+}

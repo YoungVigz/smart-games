@@ -70,7 +70,7 @@ export default function SudokuPage() {
   if (status === 'loading' || loading) return <div className="h-full flex items-center justify-center text-primary font-black animate-pulse">WCZYTYWANIE...</div>;
 
   return (
-    <div className="mx-auto h-full flex flex-col items-center justify-center">
+    <div className={`mx-auto flex flex-col items-center justify-center ${activeGame ? "w-full min-h-full" : "h-full"}`}>
       <AnimatePresence>
         {showVsScreen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[500] bg-surface flex items-center justify-center overflow-hidden">
