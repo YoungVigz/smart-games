@@ -1,0 +1,6 @@
+packages:
+    - apps/*
+    - packages/*
+
+# Keep app lockfiles and existing Docker builds independent for this first step.
+sharedWorkspaceLockfile: false

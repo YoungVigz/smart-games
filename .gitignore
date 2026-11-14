@@ -1,1 +1,9 @@
 .env
+node_modules/
+/.pnpm-store/
+/.vscode/
+
+# Nx local cache
+/.nx/
+/.nx/cache/
+/.nx/workspace-data/
