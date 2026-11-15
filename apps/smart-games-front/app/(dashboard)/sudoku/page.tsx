@@ -13,9 +13,11 @@ import {
 	ShieldCheck,
 	Loader2,
 	User as UserIcon,
+	Pause,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
+import { Button } from "@/components/Button";
 
 export default function SudokuPage() {
 	const { user, status } = useAuth();
@@ -122,7 +124,7 @@ export default function SudokuPage() {
 								animate={{ x: 0, opacity: 1 }}
 								className="text-center space-y-4"
 							>
-								<div className="w-40 h-40 bg-primary rounded-[40px] flex items-center justify-center text-surface font-black text-6xl shadow-2xl shadow-primary/30">
+								<div className="w-40 h-40 bg-primary rounded-xl flex items-center justify-center text-surface font-black text-6xl shadow-2xl shadow-primary/30">
 									{user?.login[0].toUpperCase()}
 								</div>
 								<p className="text-2xl font-black italic uppercase text-fg">
@@ -142,7 +144,7 @@ export default function SudokuPage() {
 								animate={{ x: 0, opacity: 1 }}
 								className="text-center space-y-4"
 							>
-								<div className="w-40 h-40 bg-surface-2 border-4 border-line rounded-[40px] flex items-center justify-center text-muted shadow-2xl">
+								<div className="w-40 h-40 bg-surface-2 border-4 border-line rounded-xl flex items-center justify-center text-muted shadow-2xl">
 									<UserIcon size={80} />
 								</div>
 								<p className="text-2xl font-black italic uppercase text-muted">
@@ -215,7 +217,7 @@ export default function SudokuPage() {
 							)}
 						</div>
 						<div className="lg:col-span-4">
-							<div className="bg-surface-2 border border-line p-8 rounded-[40px] shadow-2xl space-y-8 h-fit">
+							<div className="bg-surface-2 border-2 border-line p-8 rounded-xl shadow-2xl space-y-8 h-fit">
 								<SummaryRow
 									label="Poziom"
 									value={
@@ -226,7 +228,7 @@ export default function SudokuPage() {
 								/>
 								{pvpStatus === "searching" ? (
 									<div className="space-y-4">
-										<div className="text-center py-6 bg-primary/5 rounded-3xl border border-primary/20">
+										<div className="text-center py-6 bg-primary/5 rounded-xl border border-primary/20">
 											<Loader2 className="mx-auto mb-2 text-primary animate-spin" />
 											<p className="text-primary font-mono text-2xl">
 												{Math.floor(queueTime / 60)}:
@@ -235,27 +237,29 @@ export default function SudokuPage() {
 													.padStart(2, "0")}
 											</p>
 										</div>
-										<button
+										<Button
+											text="Anuluj"
+											type="squash"
 											onClick={() => {
 												socketRef.current?.emit(
 													"leave_queue",
 												);
 												setPvpStatus("idle");
 											}}
-											className="w-full bg-surface-3 hover:bg-line py-4 rounded-2xl font-black uppercase text-xs transition-all"
-										>
-											Anuluj
-										</button>
+											icon={<Pause fill="currentColor" />}
+										/>
 									</div>
 								) : (
-									<button
+									<Button
 										onClick={handleStartAction}
-										className="w-full bg-primary hover:bg-secondary text-surface font-black py-6 rounded-3xl transition-all shadow-xl shadow-primary/20 uppercase italic tracking-tighter"
-									>
-										{gameMode === "solo"
-											? "Start Solo"
-											: "Join Queue"}
-									</button>
+										type="primary"
+										text={
+											gameMode === "solo"
+												? "Start Solo"
+												: "Join Queue"
+										}
+										icon={<Play fill="currentColor" />}
+									/>
 								)}
 							</div>
 						</div>
@@ -285,10 +289,10 @@ function ModeCard({ active, onClick, icon, title, desc }: any) {
 	return (
 		<button
 			onClick={onClick}
-			className={`p-8 rounded-[32px] border-2 text-left transition-all ${active ? "bg-primary/5 border-primary" : "bg-surface-2 border-line hover:border-muted"}`}
+			className={`p-8 rounded-xl border-2 text-left transition-all ${active ? "bg-primary/5 border-primary" : "bg-surface-2 border-line hover:border-muted"}`}
 		>
 			<div
-				className={`mb-4 p-3 rounded-2xl w-fit ${active ? "bg-primary text-surface" : "bg-surface-3 text-muted"}`}
+				className={`mb-4 p-3 rounded-xl w-fit ${active ? "bg-primary text-surface" : "bg-surface-3 text-muted"}`}
 			>
 				{icon}
 			</div>
@@ -306,7 +310,7 @@ function DifficultyBtn({ label, icon: Icon, active, onClick, id }: any) {
 	return (
 		<button
 			onClick={() => onClick(id)}
-			className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all font-black uppercase text-[10px] ${active ? "border-primary text-primary bg-surface-3" : "bg-surface-2 border-line text-muted"}`}
+			className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all font-black uppercase text-[10px] ${active ? "border-primary text-primary bg-surface-3" : "bg-surface-2 border-line text-muted"}`}
 		>
 			<Icon size={14} />
 			{label}

@@ -1,6 +1,4 @@
 import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import { SudokuModule } from "./sudoku/sudoku.module";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
@@ -19,7 +17,7 @@ import { PvpModule } from "./pvp/pvp.module";
 		RankingModule,
 		PvpModule,
 	],
-	controllers: [AppController],
-	providers: [AppService],
+	controllers: [],
+	providers: [],
 })
-export class AppModule {}
+export class AppModule { }

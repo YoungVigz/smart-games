@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Trophy, Clock, AlertCircle, Gamepad2, TrendingUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { formatTime } from "@/utils/time";
+import { StatBox } from "@/components/StatBox";
 
 export default function StatisticsPage() {
 	const { status } = useAuth();
@@ -41,11 +42,11 @@ export default function StatisticsPage() {
 			avgErrors:
 				completedGames.length > 0
 					? (
-							completedGames.reduce(
-								(acc, curr) => acc + curr.errors,
-								0,
-							) / completedGames.length
-						).toFixed(1)
+						completedGames.reduce(
+							(acc, curr) => acc + curr.errors,
+							0,
+						) / completedGames.length
+					).toFixed(1)
 					: 0,
 			totalTime: games.reduce((acc, curr) => acc + curr.timeElapsed, 0),
 		};
@@ -64,11 +65,11 @@ export default function StatisticsPage() {
 				avgTime:
 					dGames.length > 0
 						? Math.round(
-								dGames.reduce(
-									(acc, curr) => acc + curr.timeElapsed,
-									0,
-								) / dGames.length,
-							)
+							dGames.reduce(
+								(acc, curr) => acc + curr.timeElapsed,
+								0,
+							) / dGames.length,
+						)
 						: null,
 			};
 		});
@@ -94,45 +95,25 @@ export default function StatisticsPage() {
 
 			{/* OGÓLNE PODSUMOWANIE */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-				<StatCard
+				<StatBox
 					label="Rozegrane"
 					value={stats.summary.total}
-					icon={
-						<Gamepad2
-							className="text-primary"
-							size={20}
-						/>
-					}
+					icon={<Gamepad2 />}
 				/>
-				<StatCard
+				<StatBox
 					label="Skuteczność"
 					value={`${stats.summary.winRate}%`}
-					icon={
-						<Trophy
-							className="text-warning"
-							size={20}
-						/>
-					}
+					icon={<Trophy />}
 				/>
-				<StatCard
+				<StatBox
 					label="Śr. Błędów"
 					value={stats.summary.avgErrors}
-					icon={
-						<AlertCircle
-							className="text-danger"
-							size={20}
-						/>
-					}
+					icon={<AlertCircle />}
 				/>
-				<StatCard
+				<StatBox
 					label="Czas w grze"
 					value={formatTime(stats.summary.totalTime)}
-					icon={
-						<Clock
-							className="text-info"
-							size={20}
-						/>
-					}
+					icon={<Clock />}
 				/>
 			</div>
 
@@ -149,13 +130,13 @@ export default function StatisticsPage() {
 					{stats.byDifficulty.map(d => (
 						<div
 							key={d.name}
-							className="bg-surface-2 border border-line p-5 rounded-2xl"
+							className="bg-surface-2 border-2 border-line p-5 rounded-xl"
 						>
 							<div className="flex justify-between items-center mb-3">
 								<span className="text-xs font-black text-muted uppercase">
 									{d.name}
 								</span>
-								<span className="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded-full font-bold">
+								<span className="bg-accent/10 text-accent text-[10px] px-2 py-1 rounded-full font-bold">
 									{d.count} UKOŃCZONYCH
 								</span>
 							</div>
@@ -190,7 +171,7 @@ export default function StatisticsPage() {
 						/>{" "}
 						Ostatnie gry
 					</h2>
-					<div className="bg-surface-2 border border-line rounded-3xl overflow-hidden">
+					<div className="bg-surface-2 border-2 border-line rounded-xl overflow-hidden">
 						<div className="overflow-x-auto">
 							<table className="w-full text-left border-collapse">
 								<thead className="bg-surface-3/50 text-muted text-[10px] font-black uppercase">
@@ -231,12 +212,11 @@ export default function StatisticsPage() {
 												</td>
 												<td className="px-6 py-4">
 													<span
-														className={`text-[10px] font-bold px-2 py-1 rounded-md ${
-															game.status ===
+														className={`text-[10px] font-bold px-2 py-1 rounded-md ${game.status ===
 															"COMPLETED"
-																? "bg-primary/10 text-primary"
-																: "bg-danger/10 text-danger"
-														}`}
+															? "bg-primary/10 text-primary"
+															: "bg-danger/10 text-danger"
+															}`}
 													>
 														{game.status}
 													</span>
@@ -257,28 +237,6 @@ export default function StatisticsPage() {
 					</div>
 				</div>
 			</div>
-		</div>
-	);
-}
-
-function StatCard({
-	label,
-	value,
-	icon,
-}: {
-	label: string;
-	value: string | number;
-	icon: React.ReactNode;
-}) {
-	return (
-		<div className="bg-surface-2 border border-line p-6 rounded-3xl shadow-sm hover:border-muted transition-colors">
-			<div className="flex justify-between items-start mb-2">
-				<p className="text-xs font-bold text-muted uppercase">
-					{label}
-				</p>
-				{icon}
-			</div>
-			<p className="text-2xl font-black text-fg">{value}</p>
 		</div>
 	);
 }

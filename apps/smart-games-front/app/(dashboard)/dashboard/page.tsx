@@ -17,6 +17,8 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { useRouter } from "next/navigation";
+import { StatBox } from "@/components/StatBox";
+import { RecentActivityCard } from "@/components/RecentActivityCard";
 
 export default function DashboardPage() {
 	const { user, status } = useAuth();
@@ -61,9 +63,9 @@ export default function DashboardPage() {
 	const { level, progress } = XpEngine.getLevelProgress(user.xp);
 
 	return (
-		<div className="mx-auto space-y-3 animate-in fade-in duration-500">
+		<div className="mx-auto space-y-4 animate-in fade-in duration-500">
 			{/* HERO SECTION */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-surface-2/50 border border-line p-8 rounded-[40px]">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-surface-2/50 border-2 border-line p-8 rounded-xl">
 				<div className="space-y-4">
 					<div className="space-y-1">
 						<h1 className="text-4xl font-black tracking-tight italic uppercase">
@@ -76,7 +78,7 @@ export default function DashboardPage() {
 					</div>
 
 					{/* Level Bar */}
-					<div className="space-y-2 min-w-[300px]">
+					<div className="space-y-2 ">
 						<div className="flex justify-between items-end px-1">
 							<span className="text-sm font-black text-fg">
 								Poziom {level}
@@ -112,38 +114,33 @@ export default function DashboardPage() {
 				</div>
 			</header>
 
-			{/* QUICK STATS GRID */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatBox
 					label="Ukończone Gry"
 					value={calculatedStats.solveCount}
 					icon={<Trophy size={18} />}
-					color="text-primary"
 				/>
 				<StatBox
 					label="Najlepszy Czas"
 					value={calculatedStats.bestTime}
 					icon={<Target size={18} />}
-					color="text-info"
 				/>
 				<StatBox
 					label="Ranking"
 					value={calculatedStats.globalRank}
 					icon={<Zap size={18} />}
-					color="text-purple-400"
 				/>
 				<StatBox
 					label="Dni z rzędu"
 					value={calculatedStats.streak}
 					icon={<History size={18} />}
-					color="text-warning"
 				/>
 			</div>
 
 			{/* GAMES HUB PREVIEW */}
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 				{/* Sudoku Card */}
-				<div className="lg:col-span-2 bg-surface-2 border border-line rounded-[40px] p-8 flex flex-col justify-between relative overflow-hidden group min-h-[300px]">
+				<div className="lg:col-span-2 bg-surface-2 border-2 border-line rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group min-h-[300px]">
 					<div className="relative z-10 space-y-4">
 						<div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center text-primary">
 							<Grid3X3 size={28} />
@@ -175,68 +172,12 @@ export default function DashboardPage() {
 					/>
 				</div>
 
-				{/* Info Card */}
-				<div className="bg-surface-2 border border-line rounded-[40px] p-8 flex flex-col justify-between">
-					<div className="space-y-6">
-						<h3 className="font-black text-xl italic uppercase tracking-tight">
-							Ostatnia Aktywność
-						</h3>
-						<div className="space-y-4">
-							{games.length === 0 ? (
-								<p className="text-muted/70 text-sm italic">
-									Brak rozegranych gier...
-								</p>
-							) : (
-								games
-									.slice(0, 3)
-									.reverse()
-									.map((g, i) => (
-										<div
-											key={i}
-											className="flex items-center justify-between border-b border-line pb-4 last:border-0"
-										>
-											<div>
-												<p className="text-sm font-bold text-fg/80">
-													{g.difficulty} Sudoku
-												</p>
-												<p className="text-[10px] text-muted uppercase font-black">
-													{g.status}
-												</p>
-											</div>
-											<div className="text-right">
-												<p className="text-xs font-mono text-muted">
-													{formatTime(g.timeElapsed)}
-												</p>
-											</div>
-										</div>
-									))
-							)}
-						</div>
-					</div>
-					<Link
-						href="/statistics"
-						className="text-center py-3 border-2 border-line hover:border-primary/50 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
-					>
-						Pełna Historia
-					</Link>
-				</div>
-			</div>
-		</div>
-	);
-}
+				<RecentActivityCard
+					games={games}
+					gameType="Sudoku"
+				/>
 
-function StatBox({ label, value, icon, color }: any) {
-	return (
-		<div className="bg-surface-2 border border-line p-6 rounded-[32px] hover:border-muted transition-all">
-			<div className="flex justify-between items-center mb-4">
-				<span className="text-[10px] font-black text-muted uppercase tracking-widest">
-					{label}
-				</span>
-				<div className={`${color} opacity-40`}>{icon}</div>
 			</div>
-			<p className="text-3xl font-black text-fg tracking-tighter">
-				{value}
-			</p>
 		</div>
 	);
 }

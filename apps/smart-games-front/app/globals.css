@@ -10,6 +10,7 @@
 	--color-foreground: var(--foreground);
 	--font-sans: var(--font-geist-sans);
 	--font-mono: var(--font-geist-mono);
+	--color-accent: var(--accent);
 }
 
 @theme {
@@ -43,6 +44,7 @@ body {
 	0% {
 		transform: translateX(-100%);
 	}
+
 	100% {
 		transform: translateX(400%);
 	}
@@ -52,12 +54,15 @@ body {
 	0% {
 		width: 0%;
 	}
+
 	30% {
 		width: 40%;
 	}
+
 	60% {
 		width: 70%;
 	}
+
 	100% {
 		width: 90%;
 	}

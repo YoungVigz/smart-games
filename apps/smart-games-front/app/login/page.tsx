@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
+import { Button } from "@/components/Button";
+import { FormField } from "@/components/FormField";
 
 export default function LoginPage() {
 	const [form, setForm] = useState({ login: "", password: "" });
@@ -87,39 +89,30 @@ export default function LoginPage() {
 					onSubmit={handleSubmit}
 					className="space-y-4"
 				>
-					<div className="space-y-1">
-						<label className="text-xs font-bold text-muted ml-1 uppercase">
-							Login
-						</label>
-						<input
-							type="text"
-							required
-							className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
-							onChange={e =>
-								setForm({ ...form, login: e.target.value })
-							}
-						/>
-					</div>
-					<div className="space-y-1">
-						<label className="text-xs font-bold text-muted ml-1 uppercase">
-							Hasło
-						</label>
-						<input
-							type="password"
-							required
-							className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
-							onChange={e =>
-								setForm({ ...form, password: e.target.value })
-							}
-						/>
-					</div>
+					<FormField
+						label="Login"
+						name="login"
+						autoComplete="username"
+						value={form.login}
+						onChange={e => setForm({ ...form, login: e.target.value })}
+						required
+					/>
 
-					<button
-						type="submit"
-						className="w-full bg-primary hover:bg-secondary text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/20 mt-4"
-					>
-						Zaloguj się
-					</button>
+					<FormField
+						label="Hasło"
+						name="password"
+						type="password"
+						autoComplete="current-password"
+						value={form.password}
+						onChange={e => setForm({ ...form, password: e.target.value })}
+						required
+					/>
+
+					<Button
+						text="Zaloguj się"
+						type="primary"
+						htmlType="submit"
+					/>
 				</form>
 
 				<p className="text-center mt-8 text-sm text-muted">

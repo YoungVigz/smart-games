@@ -15,14 +15,13 @@ export const ThemeSwitcher = () => {
 					onClick={() => setTheme(t.id)}
 					aria-pressed={theme === t.id}
 					className={`
-            flex justify-between items-center gap-3 rounded-2xl border px-4 py-3
-            text-left font-bold transition-colors cursor-pointer
-            ${
-				theme === t.id
-					? "border-primary bg-primary/10 text-primary"
-					: "border-line bg-surface-3 text-fg hover:border-muted"
-			}
-          `}
+						flex justify-between items-center gap-3 rounded-2xl border px-4 py-3
+						text-left font-bold transition-colors cursor-pointer
+						${theme === t.id
+							? "border-primary bg-primary/10 text-primary"
+							: "border-line bg-surface-3 text-fg hover:border-muted"
+						}
+					`}
 				>
 					{t.name}
 
@@ -42,7 +41,7 @@ export const ThemeSwitcher = () => {
 						/>
 						<Dot
 							id={t.id}
-							color="--surface-3"
+							color="--accent"
 						/>
 					</div>
 				</button>

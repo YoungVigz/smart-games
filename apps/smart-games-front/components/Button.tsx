@@ -2,8 +2,9 @@ import { ReactNode } from "react";
 
 interface ButtonProps {
 	text: string;
-	type: "primary" | "secondary";
-	onClick: () => void;
+	type: "primary" | "secondary" | "squash";
+	onClick?: () => void;
+	htmlType?: "button" | "submit" | "reset"
 	icon?: ReactNode;
 	iconPosition?: "left" | "right";
 }
@@ -12,19 +13,21 @@ export const Button = ({
 	text,
 	type,
 	onClick,
+	htmlType = "button",
 	icon,
 	iconPosition = "left",
 }: ButtonProps) => {
 	const styles = {
-		primary: "bg-secondary hover:bg-primary shadow-lg shadow-secondary/20",
-		secondary: "bg-surface-3 hover:bg-line",
+		primary: "py-4 font-bold bg-primary hover:bg-secondary shadow-lg shadow-primary/20",
+		secondary: "py-4 font-bold border-2 border-line hover:border-primary/80",
+		squash: "py-2 font-black border-2 border-line hover:border-primary/80 uppercase",
 	};
 
 	return (
 		<button
-			type="button"
+			type={htmlType}
 			onClick={onClick}
-			className={`w-full ${styles[type]} text-fg py-4 px-8 rounded-2xl font-bold transition cursor-pointer flex items-center justify-center gap-3`}
+			className={`w-full text-fg px-8 rounded-xl ${styles[type]} transition cursor-pointer flex items-center justify-center gap-3`}
 		>
 			{icon && iconPosition === "left" && icon}
 			<span>{text}</span>

@@ -40,7 +40,7 @@ export default function RankingPage() {
 				</div>
 
 				{/* Tabs */}
-				<div className="flex bg-surface-2 p-1 rounded-2xl border border-line">
+				<div className="flex bg-surface-2 p-1 rounded-xl border border-line">
 					<TabBtn
 						active={activeTab === "xp"}
 						onClick={() => setActiveTab("xp")}
@@ -60,10 +60,10 @@ export default function RankingPage() {
 						key="pvp"
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="bg-surface-2 border-2 border-dashed border-line rounded-[40px] p-20 flex flex-col items-center text-center space-y-4"
+						className="bg-surface-2 border-2 border-dashed border-line rounded-xl p-20 flex flex-col items-center text-center space-y-4"
 					>
 						<div className="bg-surface-3 p-6 rounded-full text-muted">
-							<Lock size={40} />
+							<Lock size={40} className="text-accent" />
 						</div>
 						<h2 className="text-2xl font-black uppercase italic text-fg/80">
 							System Rankingowy wkrótce
@@ -81,7 +81,7 @@ export default function RankingPage() {
 						animate={{ opacity: 1 }}
 						className="space-y-4"
 					>
-						<div className="bg-surface-2 border border-line rounded-[40px] overflow-hidden shadow-2xl">
+						<div className="bg-surface-2 border-2 border-line rounded-xl overflow-hidden shadow-2xl">
 							<table className="w-full text-left">
 								<thead className="bg-surface-3/50 text-[10px] font-black uppercase text-muted">
 									<tr>
@@ -169,7 +169,7 @@ function TabBtn({ active, onClick, label }: any) {
 	return (
 		<button
 			onClick={onClick}
-			className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${active ? "bg-primary text-surface shadow-lg" : "text-muted hover:text-fg"}`}
+			className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${active ? "bg-primary text-surface shadow-lg" : "text-muted hover:text-fg"}`}
 		>
 			{label}
 		</button>

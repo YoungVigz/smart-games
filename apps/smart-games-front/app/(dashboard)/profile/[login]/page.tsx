@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { User, Calendar, Trophy, BarChart, Hash, Quote } from "lucide-react";
 import { XpEngine } from "@/lib/xp-engine";
+import { Button } from "@/components/Button";
 
 const AVATAR_BG: Record<string, string> = {
 	emerald: "bg-emerald-500",
@@ -34,7 +35,7 @@ export default function PublicProfilePage() {
 	return (
 		<div className="mx-auto space-y-8 animate-in fade-in duration-500">
 			{/* Header / Avatar */}
-			<div className="bg-surface-2 border border-line rounded-[32px] p-10 relative overflow-hidden">
+			<div className="bg-surface-2 border-2 border-line rounded-xl p-10 relative overflow-hidden">
 				<div className="absolute top-0 right-0 p-10 opacity-5 text-fg">
 					<User size={200} />
 				</div>
@@ -42,7 +43,7 @@ export default function PublicProfilePage() {
 				<div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
 					{/* Stock Avatar */}
 					<div
-						className={`w-32 h-32 rounded-3xl ${AVATAR_BG[profile.avatar] ?? "bg-primary"} flex items-center justify-center text-white shadow-2xl rotate-3`}
+						className={`w-32 h-32 rounded-xl ${AVATAR_BG[profile.avatar] ?? "bg-primary"} flex items-center justify-center text-white shadow-2xl rotate-3`}
 					>
 						<User
 							size={64}
@@ -73,11 +74,11 @@ export default function PublicProfilePage() {
 
 			{/* Stats Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<div className="bg-surface-2 border border-line p-8 rounded-[24px] space-y-4">
+				<div className="bg-surface-2 border-2 border-line p-8 rounded-xl space-y-4">
 					<p className="text-muted font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
 						<Trophy
 							size={14}
-							className="text-primary"
+							className="text-accent"
 						/>{" "}
 						Poziom Konta
 					</p>
@@ -94,11 +95,11 @@ export default function PublicProfilePage() {
 					</div>
 				</div>
 
-				<div className="bg-surface-2 border border-line p-8 rounded-[24px] space-y-4">
+				<div className="bg-surface-2 border-2 border-line p-8 rounded-xl space-y-4">
 					<p className="text-muted font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
 						<Hash
 							size={14}
-							className="text-info"
+							className="text-accent"
 						/>{" "}
 						Rank
 					</p>
@@ -107,11 +108,11 @@ export default function PublicProfilePage() {
 					</p>
 				</div>
 
-				<div className="bg-surface-2 border border-line p-8 rounded-[24px] space-y-4">
+				<div className="bg-surface-2 border-2 border-line p-8 rounded-xl space-y-4">
 					<p className="text-muted font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2">
 						<BarChart
 							size={14}
-							className="text-danger"
+							className="text-accent"
 						/>{" "}
 						Gry Razem
 					</p>
@@ -122,10 +123,11 @@ export default function PublicProfilePage() {
 			</div>
 
 			{isOwnProfile && (
-				<div className="flex justify-end">
-					<button className="bg-surface-3 hover:bg-line text-fg font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all">
-						Edytuj profil
-					</button>
+				<div className="flex justify-end max-w-80">
+					<Button
+						text="Edytuj profil"
+						type="squash"
+					/>
 				</div>
 			)}
 		</div>

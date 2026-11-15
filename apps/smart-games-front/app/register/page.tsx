@@ -1,17 +1,41 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/Button";
+import { FormField } from "@/components/FormField";
+import { apiFetch } from "@/lib/api";
+
+function getRegisterErrors(message: unknown): string[] {
+	const value =
+		typeof message === "object" && message !== null && "message" in message
+			? message.message
+			: message;
+
+	const messages = (Array.isArray(value) ? value : [value]).filter(
+		(item): item is string => typeof item === "string" && item.trim() !== "",
+	);
+
+	return messages.length > 0 ? messages : ["Błąd rejestracji"];
+}
 
 export default function RegisterPage() {
 	const [form, setForm] = useState({ login: "", email: "", password: "" });
+	const [confirmPassword, setConfirmPassword] = useState("");
 	const [errors, setErrors] = useState<string[]>([]);
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (loading) return;
+
+		if (form.password !== confirmPassword) {
+			setErrors(["Wpisane hasła muszą być identyczne."]);
+			return;
+		}
+
 		setErrors([]);
 		setLoading(true);
 
@@ -20,34 +44,29 @@ export default function RegisterPage() {
 				method: "POST",
 				body: JSON.stringify(form),
 			});
+			const json: unknown = await res.json();
 
-			const json = await res.json();
-			setLoading(false);
-
-			if (json.success) {
+			if (
+				res.ok &&
+				typeof json === "object" &&
+				json !== null &&
+				"success" in json &&
+				json.success === true
+			) {
 				router.push("/login?registered=true");
-			} else {
-				let extractedErrors: string[] = [];
-
-				if (Array.isArray(json.message)) {
-					extractedErrors = json.message;
-				} else if (
-					typeof json.message === "object" &&
-					json.message !== null
-				) {
-					const msg = (json.message as any).message;
-					extractedErrors = Array.isArray(msg)
-						? msg
-						: [msg || "Błąd rejestracji"];
-				} else {
-					extractedErrors = [json.message || "Błąd rejestracji"];
-				}
-
-				setErrors(extractedErrors);
+				return;
 			}
-		} catch (err) {
-			setLoading(false);
+
+			const message =
+				typeof json === "object" && json !== null && "message" in json
+					? json.message
+					: undefined;
+
+			setErrors(getRegisterErrors(message));
+		} catch {
 			setErrors(["Błąd połączenia"]);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -64,10 +83,13 @@ export default function RegisterPage() {
 				</div>
 
 				{errors.length > 0 && (
-					<div className="bg-danger/10 border border-danger/50 text-danger p-4 rounded-xl mb-6 text-xs">
+					<div
+						role="alert"
+						className="bg-danger/10 border border-danger/50 text-danger p-4 rounded-xl mb-6 text-xs"
+					>
 						<ul className="list-disc list-inside">
-							{errors.map((err, i) => (
-								<li key={i}>{String(err)}</li>
+							{errors.map((error, index) => (
+								<li key={index}>{error}</li>
 							))}
 						</ul>
 					</div>
@@ -77,53 +99,52 @@ export default function RegisterPage() {
 					onSubmit={handleSubmit}
 					className="space-y-4"
 				>
-					<div className="space-y-1">
-						<label className="text-xs font-bold text-muted ml-1 uppercase">
-							Login
-						</label>
-						<input
-							type="text"
-							required
-							className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
-							onChange={e =>
-								setForm({ ...form, login: e.target.value })
-							}
-						/>
-					</div>
-					<div className="space-y-1">
-						<label className="text-xs font-bold text-muted ml-1 uppercase">
-							Email
-						</label>
-						<input
-							type="email"
-							required
-							className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
-							onChange={e =>
-								setForm({ ...form, email: e.target.value })
-							}
-						/>
-					</div>
-					<div className="space-y-1">
-						<label className="text-xs font-bold text-muted ml-1 uppercase">
-							Hasło
-						</label>
-						<input
-							type="password"
-							required
-							className="w-full bg-surface-3 border border-line p-4 rounded-2xl focus:border-primary outline-none transition-all"
-							onChange={e =>
-								setForm({ ...form, password: e.target.value })
-							}
-						/>
-					</div>
+					<FormField
+						label="Login"
+						name="login"
+						autoComplete="username"
+						value={form.login}
+						onChange={e => setForm({ ...form, login: e.target.value })}
+						required
+					/>
 
-					<button
-						disabled={loading}
-						type="submit"
-						className="w-full bg-primary hover:bg-secondary text-white disabled:opacity-50 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/20 mt-4"
-					>
-						{loading ? "Tworzenie konta..." : "Zarejestruj się"}
-					</button>
+					<FormField
+						label="E-mail"
+						name="email"
+						type="email"
+						autoComplete="email"
+						value={form.email}
+						onChange={e => setForm({ ...form, email: e.target.value })}
+						required
+					/>
+
+					<FormField
+						label="Hasło"
+						name="password"
+						type="password"
+						autoComplete="new-password"
+						value={form.password}
+						onChange={e =>
+							setForm({ ...form, password: e.target.value })
+						}
+						required
+					/>
+
+					<FormField
+						label="Powtórz hasło"
+						name="confirmPassword"
+						type="password"
+						autoComplete="new-password"
+						value={confirmPassword}
+						onChange={e => setConfirmPassword(e.target.value)}
+						required
+					/>
+
+					<Button
+						text={loading ? "Tworzenie konta..." : "Zarejestruj się"}
+						type="primary"
+						htmlType="submit"
+					/>
 				</form>
 
 				<p className="text-center mt-8 text-sm text-muted">
