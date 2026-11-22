@@ -1,9 +1,11 @@
 "use client";
+import type { SudokuGameView } from "@smart-games/game-engine";
 import "./board.css";
 import "./game-layout.css";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { SudokuCell } from "./SudokuCell";
 import { SudokuKeypad } from "./SudokuKeypad";
+import { getInitialCell } from "./initial-cell";
 import VictoryModal from "./VictoryModal";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -11,18 +13,19 @@ import { formatTime } from "@/utils/time";
 import { Clock, AlertCircle, Play, Pause, Flag } from "lucide-react";
 
 interface SudokuBoardProps {
-	initialData: any;
+	initialData: SudokuGameView;
 	onGameOver: () => void;
 }
 
 const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
-	const [game, setGame] = useState(initialData);
+	const [game, setGame] = useState<SudokuGameView>(initialData);
 	const [activeCell, setActiveCell] = useState<{
 		row: number;
 		col: number;
-	} | null>(null);
+	} | null>(() => getInitialCell(initialData.board));
+	const boardRef = useRef<HTMLDivElement>(null);
 	const [noteMode, setNoteMode] = useState(false);
-	const [isProcessing, setIsProcessing] = useState(false);
+	const isProcessing = useRef(false);
 	const [victoryData, setVictoryData] = useState<any>(null);
 	const { updateUserXp } = useAuth();
 	const [elapsed, setElapsed] = useState(game.timeElapsed);
@@ -30,20 +33,22 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 	const stateRef = useRef({
 		activeCell,
 		noteMode,
-		gameId: game.id,
 		status: game.status,
-		isProcessing,
 	});
 
 	useEffect(() => {
 		stateRef.current = {
 			activeCell,
 			noteMode,
-			gameId: game.id,
 			status: game.status,
-			isProcessing,
 		};
-	}, [activeCell, noteMode, game.id, game.status, isProcessing]);
+	}, [activeCell, noteMode, game.status]);
+
+	useEffect(() => {
+		if (game.status === "IN_PROGRESS") {
+			boardRef.current?.focus({ preventScroll: true });
+		}
+	}, [game.status]);
 
 	useEffect(() => {
 		if (game.status !== "IN_PROGRESS" || !game.lastStartedAt) {
@@ -51,9 +56,10 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 			return;
 		}
 
+		const startedAt = game.lastStartedAt;
 		const interval = setInterval(() => {
 			const now = new Date().getTime();
-			const start = new Date(game.lastStartedAt).getTime();
+			const start = new Date(startedAt).getTime();
 			const diff = Math.floor((now - start) / 1000);
 			setElapsed(game.timeElapsed + diff);
 		}, 1000);
@@ -63,10 +69,9 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 
 	const handleAction = useCallback(
 		async (action: string, value?: number) => {
-			const { activeCell, gameId, status, isProcessing } =
-				stateRef.current;
+			const { activeCell, status } = stateRef.current;
 
-			if (isProcessing) return;
+			if (isProcessing.current) return;
 
 			if (status === "PAUSED" && !["pause", "surrender"].includes(action))
 				return;
@@ -74,7 +79,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 			if (!activeCell && ["move", "note", "erase"].includes(action))
 				return;
 
-			setIsProcessing(true);
+			isProcessing.current = true;
 			try {
 				const body =
 					action === "pause" || action === "surrender"
@@ -90,6 +95,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 				if (json.success) {
 					if (action === "surrender") return onGameOver();
 
+					stateRef.current.status = json.data.status;
 					setGame(json.data);
 
 					if (
@@ -109,7 +115,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 			} catch (err) {
 				console.error("Błąd akcji:", err);
 			} finally {
-				setIsProcessing(false);
+				isProcessing.current = false;
 			}
 		},
 		[onGameOver, updateUserXp],
@@ -117,7 +123,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 
 	const forcePause = useCallback(async () => {
 		if (stateRef.current.status === "IN_PROGRESS") {
-			await apiFetch(`/sudoku/${stateRef.current.gameId}/pause`, {
+			await apiFetch(`/sudoku/pause`, {
 				method: "POST",
 				body: JSON.stringify({}),
 			});
@@ -131,12 +137,14 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 	}, [handleAction]);
 
 	useEffect(() => {
+		const board = boardRef.current;
 		if (game.status === "PAUSED") {
 			forceResume();
 		}
 
 		return () => {
-			forcePause();
+			// Strict Mode replays effects without removing the board from the DOM.
+			if (board && !board.isConnected) forcePause();
 		};
 	}, []);
 
@@ -203,6 +211,9 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (stateRef.current.status !== "IN_PROGRESS") return;
+			if (e.target === boardRef.current && e.key.startsWith("Arrow"))
+				e.preventDefault();
 			if (e.key >= "1" && e.key <= "9")
 				handleAction(
 					stateRef.current.noteMode ? "note" : "move",
@@ -310,9 +321,13 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 							</button>
 						</div>
 					)}
-					<div className="board">
-						{game.board.map((row: any[], rI: number) =>
-							row.map((cell: any, cI: number) => (
+					<div
+						className="board"
+						ref={boardRef}
+						tabIndex={0}
+					>
+						{game.board.map((row, rI) =>
+							row.map((cell, cI) => (
 								<SudokuCell
 									key={`${rI}-${cI}`}
 									cell={cell}
@@ -330,8 +345,7 @@ const SudokuBoard = ({ initialData, onGameOver }: SudokuBoardProps) => {
 						9 -
 						game.board
 							.flat()
-							.filter((c: any) => c.value === n && !c.invalid)
-							.length
+							.filter(c => c.value === n && !c.invalid).length
 					}
 					onInsert={n => handleAction(noteMode ? "note" : "move", n)}
 					onErase={() => handleAction("erase")}

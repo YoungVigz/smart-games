@@ -1,3 +1,4 @@
+import { withRedisLock } from "../common/utils/redis-lock";
 import {
 	BadRequestException,
 	Inject,
@@ -8,52 +9,128 @@ import { Difficulty } from "./domain/types";
 import { generateFullBoard } from "./engine/generator";
 import { createPuzzle } from "./engine/puzzle";
 import { PrismaService } from "prisma/prisma.service";
-import { XpEngine } from "src/common/utils/xp.utils";
+import { randomUUID, createHash } from "node:crypto";
+import {
+	parseDifficulty,
+	type SudokuGameView,
+	type MatrixBoard,
+} from "@smart-games/game-engine";
+import {
+	createBoard,
+	isBoardComplete,
+	assertMove,
+} from "@smart-games/game-engine/sudoku";
+import { GamesService } from "../games/games.service";
 import Redis from "ioredis";
-import { EventEmitter2 } from "@nestjs/event-emitter";
+type StoredGame = SudokuGameView & { solution: MatrixBoard };
 
 @Injectable()
 export class SudokuService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly eventEmitter: EventEmitter2,
+		private readonly games: GamesService,
 		@Inject("REDIS_CLIENT") private readonly redis: Redis,
 	) {}
+
+	private view(game: StoredGame): SudokuGameView {
+		const view = { ...game };
+		Reflect.deleteProperty(view, "solution");
+		return view;
+	}
+	async getActiveGame(userId: string) {
+		const game = await this.getStoredGame(userId);
+		return game ? this.view(game) : null;
+	}
+	private validateMove(row: number, col: number, value?: number) {
+		try {
+			assertMove(row, col, value);
+		} catch {
+			throw new BadRequestException("Invalid move");
+		}
+	}
+	private async locked<T>(
+		userId: string,
+		action: () => Promise<T>,
+	): Promise<T> {
+		return withRedisLock(this.redis, "sudoku:lock:" + userId, action);
+	}
+	generateBoard(userId: string, difficulty: Difficulty) {
+		return this.locked(userId, () =>
+			this.generateBoardUnlocked(userId, difficulty),
+		);
+	}
+	makeMove(userId: string, row: number, col: number, value: number) {
+		return this.locked(userId, () =>
+			this.makeMoveUnlocked(userId, row, col, value),
+		);
+	}
+	togglePause(userId: string) {
+		return this.locked(userId, () => this.togglePauseUnlocked(userId));
+	}
+	updateNote(userId: string, row: number, col: number, value: number) {
+		return this.locked(userId, () =>
+			this.updateNoteUnlocked(userId, row, col, value),
+		);
+	}
+	erase(userId: string, row: number, col: number) {
+		return this.locked(userId, () => this.eraseUnlocked(userId, row, col));
+	}
+	surrender(userId: string) {
+		return this.locked(userId, () => this.surrenderUnlocked(userId));
+	}
 
 	private getGameKey(userId: string) {
 		return `sudoku:active:${userId}`;
 	}
 
-	async getActiveGame(userId: string) {
+	private async getStoredGame(userId: string): Promise<StoredGame | null> {
 		const data = await this.redis.get(this.getGameKey(userId));
-		return data ? JSON.parse(data) : null;
+		if (!data) return null;
+		const game = JSON.parse(data) as StoredGame;
+		// Stable identity for games already in Redis before this release.
+		game.id ??=
+			"legacy-sudoku:" +
+			userId +
+			":" +
+			createHash("sha256")
+				.update(JSON.stringify(game.solution))
+				.digest("hex");
+		game.gameKey = "sudoku";
+		game.modeKey = "solo";
+		game.startedAt ??= game.lastStartedAt ?? new Date().toISOString();
+		return game;
 	}
 
-	async generateBoard(userId: string, difficulty: Difficulty) {
-		const active = await this.getActiveGame(userId);
+	private async generateBoardUnlocked(
+		userId: string,
+		difficulty: Difficulty,
+	) {
+		try {
+			difficulty = parseDifficulty(difficulty);
+		} catch {
+			throw new BadRequestException("Invalid difficulty");
+		}
+		const active = await this.getStoredGame(userId);
 		if (active) throw new BadRequestException("Masz już aktywną grę!");
 
 		const fullBoard = generateFullBoard();
 		const puzzle = createPuzzle(fullBoard, difficulty);
 
-		const boardState = puzzle.map(row =>
-			row.map(value => ({
-				value: value === 0 ? null : value,
-				readonly: value !== 0,
-				invalid: false,
-				notes: [],
-			})),
-		);
+		const boardState = createBoard(puzzle);
 
-		const gameData = {
+		const gameData: StoredGame = {
+			id: randomUUID(),
+			gameKey: "sudoku",
+			modeKey: "solo",
+			startedAt: new Date().toISOString(),
 			userId,
-			difficulty: difficulty.toUpperCase(),
+			difficulty: difficulty.toUpperCase() as Uppercase<Difficulty>,
 			board: boardState,
 			solution: fullBoard,
 			status: "IN_PROGRESS",
 			errors: 0,
 			timeElapsed: 0,
-			lastStartedAt: new Date(),
+			lastStartedAt: new Date().toISOString(),
 		};
 
 		await this.redis.setex(
@@ -61,21 +138,14 @@ export class SudokuService {
 			86400,
 			JSON.stringify(gameData),
 		);
-		return gameData;
+		return this.view(gameData);
 	}
 
 	async preparePvpGame(difficulty: Difficulty) {
 		const fullBoard = generateFullBoard();
 		const puzzle = createPuzzle(fullBoard, difficulty);
 
-		const boardState = puzzle.map(row =>
-			row.map(value => ({
-				value: value === 0 ? null : value,
-				readonly: value !== 0,
-				invalid: false,
-				notes: [],
-			})),
-		);
+		const boardState = createBoard(puzzle);
 
 		return {
 			board: boardState,
@@ -83,8 +153,14 @@ export class SudokuService {
 		};
 	}
 
-	async makeMove(userId: string, row: number, col: number, value: number) {
-		const game = await this.getActiveGame(userId);
+	private async makeMoveUnlocked(
+		userId: string,
+		row: number,
+		col: number,
+		value: number,
+	) {
+		this.validateMove(row, col, value);
+		const game = await this.getStoredGame(userId);
 		if (!game || game.status !== "IN_PROGRESS")
 			throw new BadRequestException(
 				"Gra jest wstrzymana lub nie istnieje",
@@ -92,12 +168,12 @@ export class SudokuService {
 
 		const count = game.board
 			.flat()
-			.filter((c: any) => c.value === value && !c.invalid).length;
+			.filter(c => c.value === value && !c.invalid).length;
 		if (count >= 9)
 			throw new BadRequestException(`Cyfra ${value} jest już ułożona!`);
 
 		const cell = game.board[row][col];
-		if (cell.readonly) return game;
+		if (cell.readonly) return this.view(game);
 
 		const isCorrect = value === game.solution[row][col];
 		cell.value = value;
@@ -110,40 +186,35 @@ export class SudokuService {
 			cell.readonly = true;
 			this.clearConflictNotes(game.board, row, col, value);
 
-			if (this.isBoardComplete(game.board, game.solution)) {
+			if (isBoardComplete(game.board, game.solution)) {
 				const finalTime = this.calculateTotalTime(game);
 
-				const xpGained = XpEngine.calculateGameReward(
-					game.difficulty,
-					game.errors,
-				);
-				const updatedUser = await this.prisma.user.update({
-					where: { id: userId },
-					data: { xp: { increment: xpGained } },
+				const result = await this.games.finalize({
+					id: game.id,
+					gameKey: "sudoku",
+					modeKey: "solo",
+					difficulty: parseDifficulty(game.difficulty),
+					reason: "SOLVED",
+					startedAt: new Date(game.startedAt),
+					durationSeconds: finalTime,
+					participants: [
+						{
+							userId,
+							outcome: "WIN",
+							errors: game.errors,
+							timeElapsed: finalTime,
+						},
+					],
 				});
-
-				this.eventEmitter.emit("user.xp_updated", {
-					userId: userId,
-					newTotalXp: updatedUser.xp,
-				});
-
-				await this.prisma.sudokuGame.create({
-					data: {
-						userId,
-						status: "COMPLETED",
-						difficulty: game.difficulty,
-						errors: game.errors,
-						timeElapsed: finalTime,
-					},
-				});
+				const reward = result.participants[0];
 
 				await this.redis.del(this.getGameKey(userId));
 				return {
-					...game,
+					...this.view(game),
 					status: "COMPLETED",
 					timeElapsed: finalTime,
-					xpGained,
-					newTotalXp: updatedUser.xp,
+					xpGained: reward.xpGained,
+					newTotalXp: reward.newTotalXp,
 				};
 			}
 		}
@@ -153,11 +224,11 @@ export class SudokuService {
 			86400,
 			JSON.stringify(game),
 		);
-		return game;
+		return this.view(game);
 	}
 
-	async togglePause(userId: string) {
-		const game = await this.getActiveGame(userId);
+	private async togglePauseUnlocked(userId: string) {
+		const game = await this.getStoredGame(userId);
 		if (!game) throw new NotFoundException("Gra nie istnieje");
 
 		if (game.status === "IN_PROGRESS") {
@@ -165,7 +236,7 @@ export class SudokuService {
 			game.lastStartedAt = null;
 			game.status = "PAUSED";
 		} else {
-			game.lastStartedAt = new Date();
+			game.lastStartedAt = new Date().toISOString();
 			game.status = "IN_PROGRESS";
 		}
 
@@ -174,16 +245,22 @@ export class SudokuService {
 			86400,
 			JSON.stringify(game),
 		);
-		return game;
+		return this.view(game);
 	}
 
-	async updateNote(userId: string, row: number, col: number, value: number) {
-		const game = await this.getActiveGame(userId);
+	private async updateNoteUnlocked(
+		userId: string,
+		row: number,
+		col: number,
+		value: number,
+	) {
+		this.validateMove(row, col, value);
+		const game = await this.getStoredGame(userId);
 		if (!game) throw new NotFoundException("Gra nie istnieje");
 
 		const board = game.board;
 		const cell = board[row][col];
-		if (cell.readonly || cell.value !== null) return game;
+		if (cell.readonly || cell.value !== null) return this.view(game);
 
 		if (!cell.notes) cell.notes = [];
 		cell.notes = cell.notes.includes(value)
@@ -195,11 +272,12 @@ export class SudokuService {
 			86400,
 			JSON.stringify(game),
 		);
-		return game;
+		return this.view(game);
 	}
 
-	async erase(userId: string, row: number, col: number) {
-		const game = await this.getActiveGame(userId);
+	private async eraseUnlocked(userId: string, row: number, col: number) {
+		this.validateMove(row, col);
+		const game = await this.getStoredGame(userId);
 		if (!game) throw new NotFoundException("Gra nie istnieje");
 
 		const board = game.board;
@@ -214,21 +292,30 @@ export class SudokuService {
 			86400,
 			JSON.stringify(game),
 		);
-		return game;
+		return this.view(game);
 	}
 
-	async surrender(userId: string) {
-		const game = await this.getActiveGame(userId);
+	private async surrenderUnlocked(userId: string) {
+		const game = await this.getStoredGame(userId);
 		if (!game) return;
 
-		await this.prisma.sudokuGame.create({
-			data: {
-				userId,
-				status: "SURRENDERED",
-				difficulty: game.difficulty,
-				errors: game.errors,
-				timeElapsed: this.calculateTotalTime(game),
-			},
+		const timeElapsed = this.calculateTotalTime(game);
+		await this.games.finalize({
+			id: game.id,
+			gameKey: "sudoku",
+			modeKey: "solo",
+			difficulty: parseDifficulty(game.difficulty),
+			reason: "SURRENDERED",
+			startedAt: new Date(game.startedAt),
+			durationSeconds: timeElapsed,
+			participants: [
+				{
+					userId,
+					outcome: "SURRENDER",
+					errors: game.errors,
+					timeElapsed,
+				},
+			],
 		});
 
 		await this.redis.del(this.getGameKey(userId));
@@ -254,33 +341,27 @@ export class SudokuService {
 		return games;
 	}
 
-	private calculateTotalTime(game: any): number {
+	private calculateTotalTime(game: StoredGame): number {
 		if (!game.lastStartedAt) return game.timeElapsed;
 		const now = new Date().getTime();
 		const start = new Date(game.lastStartedAt).getTime();
 		return game.timeElapsed + Math.floor((now - start) / 1000);
 	}
 
-	private isBoardComplete(board: any[][], solution: number[][]): boolean {
-		return board.every((r, ri) =>
-			r.every((c, ci) => c.value === solution[ri][ci]),
-		);
-	}
-
 	private clearConflictNotes(
-		board: any[][],
+		board: StoredGame["board"],
 		row: number,
 		col: number,
 		value: number,
 	) {
 		for (let i = 0; i < 9; i++) {
 			if (board[row][i].notes) {
-				board[row][i].notes = board[row][i].notes.filter(
+				board[row][i].notes = board[row][i].notes!.filter(
 					(n: number) => n !== value,
 				);
 			}
 			if (board[i][col].notes) {
-				board[i][col].notes = board[i][col].notes.filter(
+				board[i][col].notes = board[i][col].notes!.filter(
 					(n: number) => n !== value,
 				);
 			}
@@ -291,7 +372,7 @@ export class SudokuService {
 		for (let r = startRow; r < startRow + 3; r++) {
 			for (let c = startCol; c < startCol + 3; c++) {
 				if (board[r][c].notes) {
-					board[r][c].notes = board[r][c].notes.filter(
+					board[r][c].notes = board[r][c].notes!.filter(
 						(n: number) => n !== value,
 					);
 				}

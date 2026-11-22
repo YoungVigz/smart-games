@@ -133,7 +133,7 @@ export default function RankingPage() {
 						</div>
 
 						{!data?.myStats?.isInTop && (
-							<div className="bg-primary p-6 rounded-[32px] flex justify-between items-center shadow-xl shadow-primary/30 animate-bounce-subtle">
+							<div className="bg-primary p-6 rounded-xl flex justify-between items-center shadow-xl shadow-primary/30 animate-bounce-subtle">
 								<div className="flex items-center gap-6">
 									<div className="text-surface">
 										<p className="text-[10px] font-black uppercase leading-none opacity-70">
@@ -143,7 +143,7 @@ export default function RankingPage() {
 											#{data?.myStats?.rank}
 										</p>
 									</div>
-									<div className="h-10 w-[2px] bg-surface/20" />
+									<div className="h-10 w-0.5 bg-surface/20" />
 									<div className="text-surface">
 										<p className="text-[10px] font-black uppercase leading-none opacity-70">
 											Twój Wynik

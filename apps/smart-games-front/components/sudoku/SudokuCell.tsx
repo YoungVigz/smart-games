@@ -1,4 +1,4 @@
-import { Cell } from "./SudokuBoard";
+import type { SudokuCell as Cell } from "@smart-games/game-engine";
 
 type SudokuCellProps = {
 	cell: Cell;

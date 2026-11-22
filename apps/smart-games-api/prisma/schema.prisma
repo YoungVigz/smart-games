@@ -26,6 +26,7 @@ model User {
 
   sessions  UserSession[]
   games SudokuGame[]
+  participations GameParticipant[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -77,4 +78,43 @@ model SudokuGame {
   updatedAt     DateTime       @updatedAt
 
   @@index([userId, status])
+}
+
+enum GameOutcome {
+  WIN
+  LOSS
+  DRAW
+  SURRENDER
+}
+
+// Durable, finalized results. Redis remains the store for active board state.
+model GameSession {
+  id              String @id
+  gameKey         String
+  modeKey         String
+  difficulty      String
+  reason          String
+  startedAt       DateTime
+  finishedAt      DateTime @default(now())
+  durationSeconds Int
+  participants    GameParticipant[]
+
+  @@index([gameKey, modeKey, finishedAt])
+}
+
+model GameParticipant {
+  id            String @id @default(uuid())
+  sessionId     String
+  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outcome       GameOutcome
+  errors        Int
+  timeElapsed   Int
+  // Historical rewards cannot be reconstructed reliably after balance changes.
+  xpGained      Int?
+  rewardVersion String?
+
+  @@unique([sessionId, userId])
+  @@index([userId, sessionId])
 }

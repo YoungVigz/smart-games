@@ -116,7 +116,7 @@ export default function SudokuPage() {
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
-						className="fixed inset-0 z-[500] bg-surface flex items-center justify-center overflow-hidden"
+						className="fixed inset-0 z-500 bg-surface flex items-center justify-center overflow-hidden"
 					>
 						<div className="flex items-center gap-16 relative z-10">
 							<motion.div

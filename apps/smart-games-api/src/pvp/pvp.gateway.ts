@@ -1,3 +1,8 @@
+import { randomUUID } from "node:crypto";
+import { assertMove, isBoardComplete } from "@smart-games/game-engine/sudoku";
+import type { SudokuBoard, MatrixBoard } from "@smart-games/game-engine";
+import { GamesService } from "../games/games.service";
+import { withRedisLock } from "../common/utils/redis-lock";
 import { Inject } from "@nestjs/common";
 import {
 	OnGatewayConnection,
@@ -10,6 +15,19 @@ import Redis from "ioredis";
 import { Server, Socket } from "socket.io";
 import { SudokuService } from "src/sudoku/sudoku.service";
 
+interface MatchState {
+	matchId: string;
+	solution: MatrixBoard;
+	players: string[];
+	status: string;
+	startedAt?: string;
+	initialEmptyCells?: number;
+	terminal?: { triggerUserId: string; reason: "WINNER" | "DISQUALIFIED" };
+}
+interface PlayerState {
+	board: SudokuBoard;
+	errors: number;
+}
 @WebSocketGateway({
 	cors: { origin: "*" },
 	namespace: "pvp",
@@ -21,6 +39,7 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		@Inject("REDIS_CLIENT") private readonly redis: Redis,
 		private readonly sudokuService: SudokuService,
+		private readonly games: GamesService,
 	) {}
 
 	private readonly QUEUE_KEY = "pvp:queue";
@@ -49,7 +68,7 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		if (queueLen >= 2) {
 			const p1Id = await this.redis.lpop(this.QUEUE_KEY);
 			const p2Id = await this.redis.lpop(this.QUEUE_KEY);
-			if (p1Id && p2Id) this.startMatch(p1Id, p2Id);
+			if (p1Id && p2Id) await this.startMatch(p1Id, p2Id);
 		} else {
 			client.emit("queue_status", { status: "waiting" });
 		}
@@ -62,11 +81,14 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	}
 
 	private async startMatch(p1Id: string, p2Id: string) {
-		const matchId = `match:${Date.now()}`;
+		const matchId = `match:${randomUUID()}`;
 		const { board, solution } =
 			await this.sudokuService.preparePvpGame("medium");
-		const matchState = {
+		const matchState: MatchState = {
 			matchId,
+			startedAt: new Date().toISOString(),
+			initialEmptyCells: board.flat().filter(cell => cell.value === null)
+				.length,
 			solution,
 			players: [p1Id, p2Id],
 			status: "PLAYING",
@@ -115,14 +137,38 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		);
 		if (!matchId) return;
 
+		return withRedisLock(this.redis, "pvp:lock:" + matchId, () =>
+			this.applyMove(client, payload, userId, matchId),
+		);
+	}
+	private async applyMove(
+		client: Socket,
+		payload: { row: number; col: number; value: number | null },
+		userId: string,
+		matchId: string,
+	) {
+		try {
+			assertMove(payload.row, payload.col, payload.value);
+		} catch {
+			client.emit("move_error", { message: "Invalid move" });
+			return;
+		}
+
 		const metaStr = await this.redis.get(`pvp:${matchId}:meta`);
 		const playerStr = await this.redis.get(
 			`pvp:${matchId}:player:${userId}`,
 		);
 		if (!metaStr || !playerStr) return;
 
-		const meta = JSON.parse(metaStr);
-		const player = JSON.parse(playerStr);
+		const meta = JSON.parse(metaStr) as MatchState;
+		if (meta.terminal)
+			return this.endMatch(
+				matchId,
+				meta.terminal.triggerUserId,
+				meta.terminal.reason,
+			);
+		if (meta.status !== "PLAYING" || !meta.players.includes(userId)) return;
+		const player = JSON.parse(playerStr) as PlayerState;
 		const { row, col, value } = payload;
 		const cell = player.board[row][col];
 
@@ -137,12 +183,8 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			cell.invalid = !isCorrect;
 			if (!isCorrect) {
 				player.errors++;
-				if (player.errors >= 3)
-					return this.endMatch(matchId, userId, "DISQUALIFIED");
 			} else {
 				cell.readonly = true;
-				if (this.isComplete(player.board, meta.solution))
-					return this.endMatch(matchId, userId, "WINNER");
 			}
 		}
 
@@ -151,11 +193,19 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 			3600,
 			JSON.stringify(player),
 		);
+		if (player.errors >= 3)
+			return this.endMatch(matchId, userId, "DISQUALIFIED");
+		if (isBoardComplete(player.board, meta.solution))
+			return this.endMatch(matchId, userId, "WINNER");
+
 		client.emit("pvp_move_result", {
 			board: player.board,
 			errors: player.errors,
 		});
-		const progress = this.calculateProgress(player.board);
+		const progress = this.calculateProgress(
+			player.board,
+			meta.initialEmptyCells ?? 51,
+		);
 		client.to(matchId).emit("opponent_update", {
 			userId,
 			progress,
@@ -168,12 +218,63 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		triggerUserId: string,
 		reason: "WINNER" | "DISQUALIFIED",
 	) {
-		const meta = JSON.parse((await this.redis.get(`pvp:${matchId}:meta`))!);
+		const raw = await this.redis.get(`pvp:${matchId}:meta`);
+		if (!raw) return;
+		const meta = JSON.parse(raw) as MatchState;
+		if (meta.terminal) {
+			triggerUserId = meta.terminal.triggerUserId;
+			reason = meta.terminal.reason;
+		} else {
+			meta.terminal = { triggerUserId, reason };
+			await this.redis.setex(
+				`pvp:${matchId}:meta`,
+				3600,
+				JSON.stringify(meta),
+			);
+		}
 		const winnerId =
 			reason === "WINNER"
 				? triggerUserId
-				: meta.players.find((id: string) => id !== triggerUserId);
-		this.server.to(matchId).emit("match_end", { winnerId, reason });
+				: meta.players.find(id => id !== triggerUserId)!;
+		const startedAt = new Date(meta.startedAt ?? new Date().toISOString());
+		const timeElapsed = Math.max(
+			0,
+			Math.floor((Date.now() - startedAt.getTime()) / 1000),
+		);
+		const states = await Promise.all(
+			meta.players.map(async userId => {
+				const raw = await this.redis.get(
+					`pvp:${matchId}:player:${userId}`,
+				);
+				if (!raw) throw new Error("Missing player state");
+				return { userId, state: JSON.parse(raw) as PlayerState };
+			}),
+		);
+		const result = await this.games.finalize({
+			id: matchId,
+			gameKey: "sudoku",
+			modeKey: "pvp",
+			difficulty: "medium",
+			reason,
+			startedAt,
+			durationSeconds: timeElapsed,
+			participants: states.map(({ userId, state }) => ({
+				userId,
+				outcome: userId === winnerId ? "WIN" : "LOSS",
+				errors: state.errors,
+				timeElapsed,
+			})),
+		});
+		this.server.to(matchId).emit("match_end", {
+			winnerId: result.participants.find(p => p.outcome === "WIN")
+				?.userId,
+			reason: result.reason,
+			participants: result.participants.map(p => ({
+				userId: p.userId,
+				xpGained: p.xpGained,
+				newTotalXp: p.newTotalXp,
+			})),
+		});
 		await this.redis.del(`pvp:${matchId}:meta`);
 		for (const pid of meta.players) {
 			await this.redis.del(`pvp:${matchId}:player:${pid}`);
@@ -181,44 +282,25 @@ export class PvpGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		}
 	}
 
-	private calculateProgress(board: any[][]): number {
-		const totalToFill = board
+	private calculateProgress(
+		board: SudokuBoard,
+		initialEmptyCells: number,
+	): number {
+		const remaining = board
 			.flat()
-			.filter(
-				c =>
-					c.value === null ||
-					c.readonly === false ||
-					c.invalid === true,
-			).length;
-		const correctMoves = board
-			.flat()
-			.filter(
-				c => c.readonly === true && !c.invalid && c.notes === undefined,
-			).length;
-		const initialFilled = board
-			.flat()
-			.filter(
-				c =>
-					c.readonly === true &&
-					c.value !== null &&
-					c.notes?.length === 0,
-			).length;
-		const currentCorrect = board
-			.flat()
-			.filter(c => c.readonly === true && !c.invalid).length;
-		const initialCount = 30; // approx
-		return Math.max(
-			0,
-			Math.min(
-				100,
-				Math.round(
-					((currentCorrect - initialCount) / (81 - initialCount)) *
+			.filter(cell => !cell.readonly || cell.invalid).length;
+		return initialEmptyCells === 0
+			? 100
+			: Math.max(
+					0,
+					Math.min(
 						100,
-				),
-			),
-		);
+						Math.round(
+							((initialEmptyCells - remaining) /
+								initialEmptyCells) *
+								100,
+						),
+					),
+				);
 	}
-
-	private isComplete = (b: any[][], s: number[][]) =>
-		b.every((r, ri) => r.every((c, ci) => c.value === s[ri][ci]));
 }

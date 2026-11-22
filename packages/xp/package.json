@@ -1,0 +1,25 @@
+{
+	"name": "@smart-games/xp",
+	"version": "0.1.0",
+	"private": true,
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"test": "pnpm build && node --test test/*.test.cjs",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@smart-games/game-engine": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.3"
+	}
+}

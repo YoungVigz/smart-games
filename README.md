@@ -1,5 +1,7 @@
 # Smart Games
 
+Architektura wspólnych bibliotek, XP, historii i statystyk: [docs/game-platform.md](docs/game-platform.md).
+
 Platforma z grami logicznymi. Aktualnie dostępne jest Sudoku w trybie jednoosobowym oraz w trybie PvP (pojedynki w czasie rzeczywistym), wraz z systemem kont, poziomów (XP) i rankingiem.
 
 ## Stos technologiczny
@@ -19,7 +21,7 @@ smart-games/
   env.example           wzór konfiguracji
   apps/smart-games-api/       backend (NestJS)
   apps/smart-games-front/     frontend (Next.js)
-  packages/                  pusty katalog na przysz?e pakiety
+  packages/                  game-engine, xp, tooling
 ```
 
 ## Wymagania
@@ -78,7 +80,7 @@ docker compose logs -f api     # logi backendu
 ## pnpm workspace
 
 Aplikacje znajduj? si? w `apps/smart-games-api` i `apps/smart-games-front`.
-Katalog `packages/` jest na razie pusty (`.gitkeep` zachowuje go w Git).
+Katalog `packages/` zawiera wspólne pakiety: `game-engine`, `xp` oraz konfigurację `tooling`.
 
 Z katalogu g??wnego:
 
@@ -91,7 +93,7 @@ pnpm dev:front
 
 Na tym etapie ka?da aplikacja zachowuje sw?j `pnpm-lock.yaml`
 (`sharedWorkspaceLockfile: false`), aby nie przebudowywa? jeszcze konfiguracji Dockera.
-Nie dodajemy wsp?lnych pakiet?w ani zale?no?ci mi?dzy aplikacjami.
+Wspólne pakiety `@smart-games/game-engine` i `@smart-games/xp` są używane przez obie aplikacje.
 
 ## Nx
 

@@ -140,7 +140,7 @@ export default function DashboardPage() {
 			{/* GAMES HUB PREVIEW */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 				{/* Sudoku Card */}
-				<div className="lg:col-span-2 bg-surface-2 border-2 border-line rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group min-h-[300px]">
+				<div className="lg:col-span-2 bg-surface-2 border-2 border-line rounded-xl p-8 flex flex-col justify-between relative overflow-hidden group min-h-75">
 					<div className="relative z-10 space-y-4">
 						<div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center text-primary">
 							<Grid3X3 size={28} />

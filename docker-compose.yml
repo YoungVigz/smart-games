@@ -1,8 +1,8 @@
 services:
     api:
         build:
-            context: ./apps/smart-games-api
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: apps/smart-games-api/Dockerfile
             target: development
         container_name: smart_games_api
         restart: unless-stopped
@@ -26,20 +26,26 @@ services:
             watch:
                 - action: sync
                   path: ./apps/smart-games-api/src
-                  target: /app/src
+                  target: /app/apps/smart-games-api/src
                 - action: sync
                   path: ./apps/smart-games-api/prisma
-                  target: /app/prisma
+                  target: /app/apps/smart-games-api/prisma
                 - action: sync
                   path: ./apps/smart-games-api/generated
-                  target: /app/generated
+                  target: /app/apps/smart-games-api/generated
                 - action: rebuild
                   path: ./apps/smart-games-api/package.json
+                - action: rebuild
+                  path: ./packages/game-engine
+                - action: rebuild
+                  path: ./packages/xp
+                - action: rebuild
+                  path: ./apps/smart-games-api/pnpm-lock.yaml
 
     frontend:
         build:
-            context: ./apps/smart-games-front
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: apps/smart-games-front/Dockerfile
             target: development
         container_name: smart_games_front
         restart: unless-stopped
@@ -54,12 +60,18 @@ services:
             watch:
                 - action: sync
                   path: ./apps/smart-games-front
-                  target: /app
+                  target: /app/apps/smart-games-front
                   ignore:
                       - node_modules/
                       - .next/
                 - action: rebuild
                   path: ./apps/smart-games-front/package.json
+                - action: rebuild
+                  path: ./packages/game-engine
+                - action: rebuild
+                  path: ./packages/xp
+                - action: rebuild
+                  path: ./apps/smart-games-front/pnpm-lock.yaml
 
     redis:
         image: redis:7-alpine

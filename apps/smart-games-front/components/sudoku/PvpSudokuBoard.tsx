@@ -1,9 +1,12 @@
 "use client";
+import type { PvpSudokuView, MatchEnd } from "@smart-games/game-engine";
+import type { Socket } from "socket.io-client";
 import "./board.css";
 import "./game-layout.css";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { SudokuCell } from "./SudokuCell";
 import { SudokuKeypad } from "./SudokuKeypad";
+import { getInitialCell } from "./initial-cell";
 import { useAuth } from "@/context/AuthContext";
 import { Swords, AlertCircle, Trophy, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,19 +20,28 @@ export default function PvPSudokuBoard({
 	initialData,
 	socket,
 	onGameOver,
-}: any) {
-	const { user } = useAuth();
+}: {
+	initialData: PvpSudokuView;
+	socket: Socket | null;
+	onGameOver: () => void;
+}) {
+	const { user, updateUserXp } = useAuth();
 	const [game, setGame] = useState(initialData);
 	const [activeCell, setActiveCell] = useState<{
 		row: number;
 		col: number;
-	} | null>(null);
+	} | null>(() => getInitialCell(initialData.board));
+	const boardRef = useRef<HTMLDivElement>(null);
 	const [opponentProgress, setOpponentProgress] = useState({
 		progress: 0,
 		errors: 0,
 	});
 	const [noteMode, setNoteMode] = useState(false);
-	const [matchResult, setMatchResult] = useState<any>(null);
+	const [matchResult, setMatchResult] = useState<MatchEnd | null>(null);
+
+	useEffect(() => {
+		boardRef.current?.focus({ preventScroll: true });
+	}, []);
 
 	const stateRef = useRef({
 		activeCell,
@@ -61,16 +73,21 @@ export default function PvPSudokuBoard({
 				errors: data.errors,
 			}),
 		);
-		socket.on("match_end", (data: any) => setMatchResult(data));
+		socket.on("match_end", (data: MatchEnd) => {
+			setMatchResult(data);
+			const reward = data.participants?.find(p => p.userId === user?.id);
+			if (reward) updateUserXp(reward.newTotalXp);
+		});
 		return () => {
 			socket.off("pvp_move_result");
 			socket.off("opponent_update");
 			socket.off("match_end");
 		};
-	}, [socket]);
+	}, [socket, user?.id, updateUserXp]);
 
 	const handleAction = useCallback(
 		(action: string, value?: number) => {
+			if (!socket) return;
 			if (stateRef.current.matchResult) return;
 			const cell = stateRef.current.activeCell;
 			if (!cell) return;
@@ -87,12 +104,14 @@ export default function PvPSudokuBoard({
 					value: null,
 				});
 			else if (action === "note") {
+				if (value === undefined) return;
 				const newBoard = [...game.board];
 				const target = newBoard[cell.row][cell.col];
 				if (target.readonly || target.value !== null) return;
-				target.notes = (target.notes || []).includes(value)
-					? target.notes.filter((n: any) => n !== value)
-					: [...(target.notes || []), value].sort();
+				const notes = target.notes ?? [];
+				target.notes = notes.includes(value)
+					? notes.filter(n => n !== value)
+					: [...notes, value].sort((a, b) => a - b);
 				setGame((prev: any) => ({ ...prev, board: newBoard }));
 			}
 		},
@@ -101,6 +120,9 @@ export default function PvPSudokuBoard({
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
+			if (stateRef.current.matchResult) return;
+			if (e.target === boardRef.current && e.key.startsWith("Arrow"))
+				e.preventDefault();
 			if (e.key >= "1" && e.key <= "9")
 				handleAction(
 					stateRef.current.noteMode ? "note" : "move",
@@ -174,7 +196,11 @@ export default function PvPSudokuBoard({
 			</div>
 			<div className="solo-play-area">
 				<div className="solo-board-area">
-					<div className="board">
+					<div
+						className="board"
+						ref={boardRef}
+						tabIndex={0}
+					>
 						{game.board.map((row: any[], rI: number) =>
 							row.map((cell: any, cI: number) => (
 								<SudokuCell
@@ -242,7 +268,7 @@ function ResultModal({ result, userId, onGameOver }: any) {
 		<motion.div
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
-			className="fixed inset-0 z-[700] bg-surface/95 backdrop-blur-md flex items-center justify-center p-6"
+			className="fixed inset-0 z-700 bg-surface/95 backdrop-blur-md flex items-center justify-center p-6"
 		>
 			<div className="bg-surface-2 border border-line p-10 rounded-[40px] text-center max-w-sm w-full space-y-6">
 				<div

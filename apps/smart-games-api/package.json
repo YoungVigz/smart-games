@@ -6,19 +6,22 @@
 	"private": true,
 	"license": "UNLICENSED",
 	"scripts": {
-		"build": "nest build",
+		"build": "pnpm run build:packages && nest build",
 		"format": "pnpm --dir ../.. exec prettier --write apps/smart-games-api",
-		"start": "nest start",
-		"start:dev": "nest start --watch",
-		"start:debug": "nest start --debug --watch",
+		"start": "pnpm run build:packages && nest start",
+		"start:dev": "pnpm run build:packages && nest start --watch",
+		"start:debug": "pnpm run build:packages && nest start --debug --watch",
 		"start:prod": "node dist/main",
 		"lint": "eslint .",
-		"test": "jest",
+		"test": "pnpm run build:packages && jest",
 		"test:watch": "jest --watch",
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-		"test:e2e": "jest --config ./test/jest-e2e.json",
-		"lint:fix": "eslint . --fix"
+		"test:e2e": "pnpm run build:packages && jest --config ./test/jest-e2e.json",
+		"lint:fix": "eslint . --fix",
+		"build:packages": "pnpm --filter @smart-games/xp... run build",
+		"test:integration": "pnpm build && node --test test/games.integration.cjs",
+		"test:games": "pnpm run build:packages && jest --runInBand src/pvp/pvp.gateway.spec.ts src/sudoku/test/sudoku.service.spec.ts"
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.0.1",
@@ -42,7 +45,9 @@
 		"pg": "^8.20.0",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1",
-		"socket.io": "^4.8.3"
+		"socket.io": "^4.8.3",
+		"@smart-games/xp": "workspace:*",
+		"@smart-games/game-engine": "workspace:*"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.2.0",
@@ -79,6 +84,12 @@
 			"**/*.(t|j)s"
 		],
 		"coverageDirectory": "../coverage",
-		"testEnvironment": "node"
+		"testEnvironment": "node",
+		"moduleNameMapper": {
+			"^src/(.*)$": "<rootDir>/$1",
+			"^prisma/(.*)$": "<rootDir>/../prisma/$1",
+			"^generated/(.*)$": "<rootDir>/../generated/$1",
+			"^(\\.{1,2}/.*)\\.js$": "$1"
+		}
 	}
 }

@@ -44,6 +44,12 @@ importers:
       '@scalar/nestjs-api-reference':
         specifier: ^1.1.14
         version: 1.1.14
+      '@smart-games/game-engine':
+        specifier: workspace:*
+        version: link:../../packages/game-engine
+      '@smart-games/xp':
+        specifier: workspace:*
+        version: link:../../packages/xp
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0

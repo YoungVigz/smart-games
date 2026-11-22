@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@smart-games/game-engine':
+        specifier: workspace:*
+        version: link:../../packages/game-engine
+      '@smart-games/xp':
+        specifier: workspace:*
+        version: link:../../packages/xp
       framer-motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

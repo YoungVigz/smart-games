@@ -1,12 +1,6 @@
-export type Difficulty = "easy" | "medium" | "hard";
-
-export type Cell = {
-	value: number | null;
-	readonly: boolean;
-	invalid?: boolean;
-	notes?: number[];
-};
-
-export type Board = Cell[][];
-
-export type MatrixBoard = number[][];
+export type {
+	Difficulty,
+	SudokuCell as Cell,
+	SudokuBoard as Board,
+	MatrixBoard,
+} from "@smart-games/game-engine";
